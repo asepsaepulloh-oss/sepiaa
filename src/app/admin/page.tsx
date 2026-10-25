@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { BearHead, BearPaw } from '@/components/BearIcon';
 import {
   DollarSign,
@@ -17,8 +18,18 @@ import {
   Layers,
   Copy,
   Check,
-  PlusCircle,
+  Plus,
   Trash2,
+  Users,
+  Settings,
+  Receipt,
+  FileText,
+  Search,
+  ExternalLink,
+  ChevronRight,
+  TrendingUp,
+  X,
+  ShieldCheck,
 } from 'lucide-react';
 
 interface Metrics {
@@ -26,6 +37,7 @@ interface Metrics {
   totalOrders: number;
   paidOrders: number;
   activeStockCount: number;
+  totalCustomers: number;
 }
 
 interface OrderItem {
@@ -37,6 +49,7 @@ interface OrderItem {
   totalPayment: number;
   customerName: string;
   customerWhatsapp: string;
+  customerEmail: string | null;
   status: string;
   accountDelivered: string | null;
   createdAt: number;
@@ -57,6 +70,7 @@ interface CategoryItem {
   id: string;
   name: string;
   slug: string;
+  icon: string;
 }
 
 interface ProductItem {
@@ -66,6 +80,19 @@ interface ProductItem {
   imageUrl: string;
   badge: string | null;
   description: string;
+  isActive: number;
+  variants: VariantItem[];
+  totalStock: number;
+  minPrice: number;
+  maxPrice: number;
+}
+
+interface CustomerItem {
+  id: string;
+  name: string;
+  whatsapp: string;
+  email: string | null;
+  createdAt: number;
 }
 
 interface NewVariantForm {
@@ -76,12 +103,23 @@ interface NewVariantForm {
   description: string;
 }
 
+interface ParsedAccount {
+  email: string;
+  password: string;
+  catatan: string;
+}
+
 export default function AdminPage() {
+  const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [adminUsername, setAdminUsername] = useState('Admin');
   const [usernameInput, setUsernameInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  // Active Tab
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'produk' | 'pesanan' | 'pelanggan' | 'pengaturan'>('dashboard');
 
   // Dashboard Data
   const [metrics, setMetrics] = useState<Metrics | null>(null);
@@ -89,30 +127,39 @@ export default function AdminPage() {
   const [orders, setOrders] = useState<OrderItem[]>([]);
   const [variants, setVariants] = useState<VariantItem[]>([]);
   const [products, setProducts] = useState<ProductItem[]>([]);
-  const [activeTab, setActiveTab] = useState<'orders' | 'add-product' | 'stock' | 'variants'>('orders');
+  const [customers, setCustomers] = useState<CustomerItem[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
+  const [searchTableQuery, setSearchTableQuery] = useState('');
 
-  // Stock Form
-  const [selectedVariantId, setSelectedVariantId] = useState('');
-  const [rawAccounts, setRawAccounts] = useState('');
-  const [stockMessage, setStockMessage] = useState<string | null>(null);
-  const [isSubmittingStock, setIsSubmittingStock] = useState(false);
+  // Modals
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [isBulkStockModalOpen, setIsBulkStockModalOpen] = useState(false);
 
-  // Add Product Form
-  const [newProductName, setNewProductName] = useState('');
-  const [newCategoryId, setNewCategoryId] = useState('');
-  const [newImageUrl, setNewImageUrl] = useState('');
-  const [newBadge, setNewBadge] = useState('');
-  const [newDescription, setNewDescription] = useState('');
-  const [newVariants, setNewVariants] = useState<NewVariantForm[]>([
-    { name: '1 Bulan Sharing', durationDays: 30, price: 25000, originalPrice: 45000, description: '1 Profil khusus 1 user' },
+  // Add Product Form State
+  const [prodName, setProdName] = useState('');
+  const [prodCategory, setProdCategory] = useState('');
+  const [prodImageUrl, setProdImageUrl] = useState('');
+  const [prodBadge, setProdBadge] = useState('');
+  const [prodTagline, setProdTagline] = useState('');
+  const [modalVariants, setModalVariants] = useState<NewVariantForm[]>([
+    { name: 'Lisensi Standar (1 Bulan)', durationDays: 30, price: 34900, originalPrice: 59900, description: '1 Profil / Perangkat' },
   ]);
-  const [isCreatingProduct, setIsCreatingProduct] = useState(false);
-  const [productSuccessMessage, setProductSuccessMessage] = useState<string | null>(null);
-  const [productErrorMessage, setProductErrorMessage] = useState<string | null>(null);
+  const [isSubmittingProduct, setIsSubmittingProduct] = useState(false);
 
-  // Copy helper
+  // Bulk Stock Modal State
+  const [bulkTargetProductId, setBulkTargetProductId] = useState('');
+  const [bulkTargetVariantId, setBulkTargetVariantId] = useState('');
+  const [bulkRawText, setBulkRawText] = useState('');
+  const [isSubmittingBulkStock, setIsSubmittingBulkStock] = useState(false);
+
+  // Copy & Toast
   const [copiedOrderId, setCopiedOrderId] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<{ title: string; desc: string } | null>(null);
+
+  const showToast = (title: string, desc: string) => {
+    setToastMessage({ title, desc });
+    setTimeout(() => setToastMessage(null), 3500);
+  };
 
   const fetchDashboardData = async () => {
     setIsLoadingData(true);
@@ -127,17 +174,22 @@ export default function AdminPage() {
       const data = await res.json();
       if (data.success) {
         setIsAuthenticated(true);
+        setAdminUsername(data.adminUsername || 'Admin');
         setMetrics(data.metrics);
         setCategories(data.categories || []);
         setOrders(data.orders || []);
         setVariants(data.variants || []);
         setProducts(data.products || []);
+        setCustomers(data.customers || []);
 
-        if (data.categories && data.categories.length > 0 && !newCategoryId) {
-          setNewCategoryId(data.categories[0].id);
+        if (data.categories?.length > 0 && !prodCategory) {
+          setProdCategory(data.categories[0].id);
         }
-        if (data.variants && data.variants.length > 0 && !selectedVariantId) {
-          setSelectedVariantId(data.variants[0].id);
+        if (data.products?.length > 0 && !bulkTargetProductId) {
+          setBulkTargetProductId(data.products[0].id);
+          if (data.products[0].variants?.length > 0) {
+            setBulkTargetVariantId(data.products[0].variants[0].id);
+          }
         }
       } else {
         setIsAuthenticated(false);
@@ -172,6 +224,7 @@ export default function AdminPage() {
       if (res.ok && data.success) {
         setIsAuthenticated(true);
         fetchDashboardData();
+        showToast('Login Berhasil', 'Selamat datang di Panel Kontrol Sepia Admin.');
       } else {
         setLoginError(data.error || 'Login gagal');
       }
@@ -185,31 +238,62 @@ export default function AdminPage() {
   const handleLogout = async () => {
     await fetch('/api/admin/logout', { method: 'POST' });
     setIsAuthenticated(false);
+    router.push('/login');
   };
 
-  const handleAddStock = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setStockMessage(null);
-    if (!selectedVariantId || !rawAccounts.trim()) {
-      alert('Pilih varian dan masukkan baris data akun.');
+  // Parsing Bulk Text `email|password|catatan`
+  const parseBulkText = (text: string): ParsedAccount[] => {
+    const lines = text.split('\n');
+    const parsed: ParsedAccount[] = [];
+
+    lines.forEach((line) => {
+      const trimmed = line.trim();
+      if (trimmed) {
+        const parts = trimmed.split('|');
+        if (parts.length >= 2) {
+          parsed.push({
+            email: parts[0].trim(),
+            password: parts[1].trim(),
+            catatan: parts[2] ? parts[2].trim() : 'Lisensi Resmi',
+          });
+        } else {
+          parsed.push({
+            email: trimmed,
+            password: '-',
+            catatan: 'Stok Manual',
+          });
+        }
+      }
+    });
+
+    return parsed;
+  };
+
+  const parsedBulkAccounts = parseBulkText(bulkRawText);
+
+  // Submit Bulk Stock
+  const handleExecuteBulkStock = async () => {
+    if (!bulkTargetVariantId || parsedBulkAccounts.length === 0) {
+      showToast('Peringatan', 'Pilih varian dan masukkan data akun yang valid.');
       return;
     }
 
-    setIsSubmittingStock(true);
+    setIsSubmittingBulkStock(true);
     try {
       const res = await fetch('/api/admin/stock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          variantId: selectedVariantId,
-          rawAccounts: rawAccounts.trim(),
+          variantId: bulkTargetVariantId,
+          rawAccounts: bulkRawText.trim(),
         }),
       });
 
       const data = await res.json();
       if (data.success) {
-        setStockMessage(data.message);
-        setRawAccounts('');
+        showToast('Bulk Stok Ditambahkan', `Berhasil menambahkan ${parsedBulkAccounts.length} akun ke stok varian.`);
+        setBulkRawText('');
+        setIsBulkStockModalOpen(false);
         fetchDashboardData();
       } else {
         alert(data.error || 'Gagal menambahkan stok');
@@ -217,60 +301,35 @@ export default function AdminPage() {
     } catch (err: any) {
       alert('Error: ' + err.message);
     } finally {
-      setIsSubmittingStock(false);
+      setIsSubmittingBulkStock(false);
     }
   };
 
-  const handleAddVariantRow = () => {
-    setNewVariants((prev) => [
-      ...prev,
-      { name: '', durationDays: 30, price: '', originalPrice: '', description: '' },
-    ]);
-  };
-
-  const handleRemoveVariantRow = (index: number) => {
-    if (newVariants.length <= 1) return;
-    setNewVariants((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleVariantChange = (index: number, field: keyof NewVariantForm, value: any) => {
-    setNewVariants((prev) => {
-      const updated = [...prev];
-      updated[index] = { ...updated[index], [field]: value };
-      return updated;
-    });
-  };
-
-  const handleCreateProduct = async (e: React.FormEvent) => {
+  // Submit New Product
+  const handleAddProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setProductSuccessMessage(null);
-    setProductErrorMessage(null);
-
-    if (!newProductName.trim() || !newCategoryId || !newDescription.trim()) {
-      setProductErrorMessage('Nama produk, kategori, dan deskripsi wajib diisi.');
+    if (!prodName.trim() || !prodCategory || !prodTagline.trim()) {
+      showToast('Peringatan', 'Nama produk, kategori, dan deskripsi wajib diisi.');
       return;
     }
 
-    for (let i = 0; i < newVariants.length; i++) {
-      const v = newVariants[i];
-      if (!v.name.trim() || !v.price) {
-        setProductErrorMessage(`Varian #${i + 1} harus memiliki nama dan harga jual.`);
-        return;
-      }
+    if (modalVariants.length === 0 || !modalVariants[0].name.trim() || !modalVariants[0].price) {
+      showToast('Peringatan', 'Minimal harus ada 1 varian produk dengan harga valid.');
+      return;
     }
 
-    setIsCreatingProduct(true);
+    setIsSubmittingProduct(true);
     try {
       const res = await fetch('/api/admin/product/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: newProductName.trim(),
-          categoryId: newCategoryId,
-          description: newDescription.trim(),
-          imageUrl: newImageUrl.trim() || undefined,
-          badge: newBadge.trim() || undefined,
-          variants: newVariants.map((v) => ({
+          name: prodName.trim(),
+          categoryId: prodCategory,
+          description: prodTagline.trim(),
+          imageUrl: prodImageUrl.trim() || undefined,
+          badge: prodBadge.trim() || undefined,
+          variants: modalVariants.map((v) => ({
             name: v.name.trim(),
             durationDays: Number(v.durationDays) || 30,
             price: Number(v.price),
@@ -282,22 +341,23 @@ export default function AdminPage() {
 
       const data = await res.json();
       if (res.ok && data.success) {
-        setProductSuccessMessage(data.message || 'Produk baru berhasil diterbitkan!');
-        setNewProductName('');
-        setNewDescription('');
-        setNewImageUrl('');
-        setNewBadge('');
-        setNewVariants([
-          { name: '1 Bulan Sharing', durationDays: 30, price: 25000, originalPrice: 45000, description: '1 Profil khusus 1 user' },
+        showToast('Produk Berhasil Disimpan', `Aplikasi "${prodName}" berhasil ditambahkan.`);
+        setProdName('');
+        setProdTagline('');
+        setProdImageUrl('');
+        setProdBadge('');
+        setModalVariants([
+          { name: 'Lisensi Standar (1 Bulan)', durationDays: 30, price: 34900, originalPrice: 59900, description: '1 Profil / Perangkat' },
         ]);
+        setIsProductModalOpen(false);
         fetchDashboardData();
       } else {
-        setProductErrorMessage(data.error || 'Gagal menambahkan produk');
+        alert(data.error || 'Gagal menambahkan produk');
       }
     } catch (err: any) {
-      setProductErrorMessage(err.message || 'Koneksi gagal');
+      alert('Error: ' + err.message);
     } finally {
-      setIsCreatingProduct(false);
+      setIsSubmittingProduct(false);
     }
   };
 
@@ -314,6 +374,7 @@ export default function AdminPage() {
       });
       const data = await res.json();
       if (data.success) {
+        showToast('Produk Dihapus', `Aplikasi "${productName}" berhasil dihapus.`);
         fetchDashboardData();
       } else {
         alert(data.error || 'Gagal menghapus produk');
@@ -337,6 +398,7 @@ export default function AdminPage() {
     setTimeout(() => setCopiedOrderId(null), 2000);
   };
 
+  // Loading Screen
   if (isAuthenticated === null) {
     return (
       <div className="min-h-screen bg-[#f7f3ed] flex items-center justify-center text-[#7e5434]">
@@ -349,12 +411,12 @@ export default function AdminPage() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-[#f7f3ed] text-[#3b281a] flex flex-col items-center justify-center p-4">
-        <div className="w-full max-w-sm bg-[#fcfaf7] border border-[#ebdccb] rounded-3xl p-6 sm:p-8 shadow-xl space-y-6 card-shadow">
+        <div className="w-full max-w-sm bg-[#fcfaf7] border border-[#ebdccb] rounded-3xl p-6 sm:p-8 space-y-6 card-shadow">
           <div className="text-center space-y-2">
             <div className="w-14 h-14 rounded-2xl bg-[#543827] flex items-center justify-center mx-auto text-[#fcfaf7] shadow-md">
               <BearHead className="w-8 h-8 text-[#f5efe6]" />
             </div>
-            <h1 className="text-xl font-extrabold text-[#543827] tracking-tight">Admin Sepia Store</h1>
+            <h1 className="text-xl font-extrabold text-[#543827] tracking-tight">Sepia Admin Panel</h1>
             <p className="text-xs text-[#7e5434]">Masuk untuk mengelola produk, pesanan, dan stok</p>
           </div>
 
@@ -396,7 +458,7 @@ export default function AdminPage() {
               className="w-full py-3.5 rounded-2xl font-bold text-xs bg-[#543827] hover:bg-[#67442d] text-[#fcfaf7] transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md"
             >
               {isLoggingIn ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-              <span>Masuk ke Dashboard</span>
+              <span>Masuk ke Panel Kontrol</span>
             </button>
           </form>
 
@@ -410,641 +472,1031 @@ export default function AdminPage() {
     );
   }
 
-  // Logged-in Dashboard
+  const titleMap = {
+    dashboard: 'Dashboard Statistik',
+    produk: 'Manajemen Produk & Varian',
+    pesanan: 'Daftar Pesanan & Transaksi',
+    pelanggan: 'Daftar Pelanggan Terdaftar',
+    pengaturan: 'Pengaturan Toko',
+  };
+
+  // Filtered orders based on search input
+  const filteredOrders = orders.filter(
+    (o) =>
+      !searchTableQuery ||
+      o.orderId.toLowerCase().includes(searchTableQuery.toLowerCase()) ||
+      o.customerName.toLowerCase().includes(searchTableQuery.toLowerCase()) ||
+      o.productName.toLowerCase().includes(searchTableQuery.toLowerCase())
+  );
+
   return (
-    <div className="min-h-screen bg-[#f7f3ed] text-[#3b281a] flex flex-col">
-      {/* Header */}
-      <header className="border-b border-[#ebdccb] bg-[#f7f3ed] sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="text-xs font-bold text-[#7e5434] hover:text-[#543827] flex items-center gap-1.5">
-              <ArrowLeft className="w-4 h-4" />
-              <span>Lihat Toko</span>
-            </Link>
-            <span className="text-[#ebdccb]">|</span>
-            <div className="flex items-center gap-2">
-              <BearHead className="w-5 h-5 text-[#7e5434]" />
-              <span className="font-extrabold text-sm text-[#543827]">SEPIA STORE ADMIN</span>
-              <span className="text-[10px] bg-[#ebdccb] text-[#543827] border border-[#dec4a6] px-1.5 py-0.5 rounded font-mono font-bold">
-                TURSO LIVE
+    <div className="bg-[#f7f3ed] min-h-screen flex antialiased text-[#3b281a] w-full">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-5 right-5 z-50 bg-[#543827] text-[#fcfaf7] px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-[#7e5434] animate-in slide-in-from-top duration-300">
+          <CheckCircle className="w-5 h-5 text-[#cfa67c] shrink-0" />
+          <div>
+            <h4 className="font-bold text-xs">{toastMessage.title}</h4>
+            <p className="text-[11px] text-[#dec4a6]">{toastMessage.desc}</p>
+          </div>
+        </div>
+      )}
+
+      {/* SIDEBAR */}
+      <aside className="w-64 bg-[#543827] text-[#dec4a6] hidden md:flex flex-col justify-between p-6 border-r border-[#67442d] shrink-0">
+        <div className="space-y-8">
+          {/* Brand Logo */}
+          <div
+            className="flex items-center gap-3 cursor-pointer"
+            onClick={() => setActiveTab('dashboard')}
+          >
+            <div className="w-10 h-10 rounded-xl bg-[#67442d] flex items-center justify-center text-[#fcfaf7] shadow-md border border-[#7e5434]">
+              <BearHead className="w-6 h-6 text-[#f5efe6]" />
+            </div>
+            <div>
+              <span className="font-extrabold text-lg tracking-tight text-[#fcfaf7]">Sepia Admin</span>
+              <span className="block text-[10px] uppercase tracking-widest text-[#cfa67c] font-semibold">
+                Panel Kontrol
               </span>
             </div>
           </div>
 
+          {/* Navigation Links */}
+          <nav className="space-y-1.5 text-xs font-semibold">
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all cursor-pointer ${
+                activeTab === 'dashboard'
+                  ? 'bg-[#67442d] text-[#fcfaf7] shadow-inner font-bold'
+                  : 'text-[#dec4a6] hover:bg-[#67442d]/60 hover:text-white'
+              }`}
+            >
+              <Clock className="w-4 h-4" />
+              <span>Dashboard</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('produk')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all cursor-pointer ${
+                activeTab === 'produk'
+                  ? 'bg-[#67442d] text-[#fcfaf7] shadow-inner font-bold'
+                  : 'text-[#dec4a6] hover:bg-[#67442d]/60 hover:text-white'
+              }`}
+            >
+              <Layers className="w-4 h-4" />
+              <span>Produk &amp; Varian</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('pesanan')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all cursor-pointer ${
+                activeTab === 'pesanan'
+                  ? 'bg-[#67442d] text-[#fcfaf7] shadow-inner font-bold'
+                  : 'text-[#dec4a6] hover:bg-[#67442d]/60 hover:text-white'
+              }`}
+            >
+              <Receipt className="w-4 h-4" />
+              <span>Pesanan &amp; Transaksi</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('pelanggan')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all cursor-pointer ${
+                activeTab === 'pelanggan'
+                  ? 'bg-[#67442d] text-[#fcfaf7] shadow-inner font-bold'
+                  : 'text-[#dec4a6] hover:bg-[#67442d]/60 hover:text-white'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              <span>Pelanggan</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('pengaturan')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all cursor-pointer ${
+                activeTab === 'pengaturan'
+                  ? 'bg-[#67442d] text-[#fcfaf7] shadow-inner font-bold'
+                  : 'text-[#dec4a6] hover:bg-[#67442d]/60 hover:text-white'
+              }`}
+            >
+              <Settings className="w-4 h-4" />
+              <span>Pengaturan</span>
+            </button>
+          </nav>
+        </div>
+
+        {/* Admin Profile Footer */}
+        <div className="pt-6 border-t border-[#67442d] flex items-center justify-between">
           <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-[#7e5434] flex items-center justify-center font-bold text-white text-xs border border-[#9e6d42]">
+              {adminUsername.slice(0, 2).toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <h5 className="text-xs font-bold text-[#fcfaf7] truncate">{adminUsername}</h5>
+              <span className="text-[10px] text-[#cfa67c] block">Super Administrator</span>
+            </div>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="text-[#dec4a6] hover:text-rose-300 transition-colors text-xs p-2 cursor-pointer"
+            title="Keluar Sesi Admin"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
+        </div>
+      </aside>
+
+      {/* MAIN CONTENT WRAPPER */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* TOP HEADER */}
+        <header className="bg-[#fcfaf7] border-b border-[#ebdccb] sticky top-0 z-30 px-6 h-20 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Link
+              href="/"
+              className="text-xs font-bold text-[#7e5434] hover:text-[#543827] flex items-center gap-1.5 md:hidden"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Toko</span>
+            </Link>
+            <h1 className="text-lg sm:text-2xl font-extrabold text-[#543827]">
+              {titleMap[activeTab]}
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="relative hidden sm:block">
+              <input
+                type="text"
+                placeholder="Cari di panel..."
+                value={searchTableQuery}
+                onChange={(e) => setSearchTableQuery(e.target.value)}
+                className="pl-9 pr-4 py-2 bg-[#f5efe6] border border-[#ebdccb] rounded-full text-xs text-[#543827] placeholder-[#9e6d42] focus:outline-none focus:ring-1 focus:ring-[#b88654] w-48 lg:w-60"
+              />
+              <Search className="w-3.5 h-3.5 absolute left-3.5 top-2.5 text-[#9e6d42] pointer-events-none" />
+            </div>
+
             <button
               onClick={fetchDashboardData}
               disabled={isLoadingData}
-              className="p-2 rounded-xl bg-[#f5efe6] hover:bg-[#ebdccb] text-[#543827] border border-[#dec4a6] transition-colors cursor-pointer"
+              className="p-2 rounded-full bg-[#f5efe6] hover:bg-[#ebdccb] text-[#543827] border border-[#dec4a6] transition-colors cursor-pointer"
               title="Refresh Data"
             >
-              <RefreshCw className={`w-4 h-4 ${isLoadingData ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoadingData ? 'animate-spin' : ''}`} />
             </button>
 
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 transition-colors cursor-pointer"
+            <Link
+              href="/"
+              target="_blank"
+              className="flex items-center gap-1.5 bg-[#f5efe6] border border-[#ebdccb] px-3.5 py-1.5 rounded-full text-xs font-bold text-[#543827] hover:bg-[#ebdccb] transition-colors"
             >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>Keluar</span>
-            </button>
+              <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+              <span className="hidden sm:inline">Live Store</span>
+              <ExternalLink className="w-3 h-3 text-[#9e6d42]" />
+            </Link>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Main Dashboard Body */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
-        {/* Metric Cards */}
-        {metrics && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-5 rounded-3xl bg-[#fcfaf7] border border-[#ebdccb] space-y-1 card-shadow">
-              <span className="text-xs font-semibold text-[#7e5434] flex items-center gap-1.5">
-                <DollarSign className="w-4 h-4 text-[#b88654]" />
-                <span>Total Omset Lunas</span>
-              </span>
-              <p className="text-lg sm:text-2xl font-black text-[#543827]">
-                {formatRupiah(metrics.totalRevenue)}
-              </p>
-            </div>
-
-            <div className="p-5 rounded-3xl bg-[#fcfaf7] border border-[#ebdccb] space-y-1 card-shadow">
-              <span className="text-xs font-semibold text-[#7e5434] flex items-center gap-1.5">
-                <CheckCircle className="w-4 h-4 text-emerald-700" />
-                <span>Pesanan Selesai</span>
-              </span>
-              <p className="text-lg sm:text-2xl font-black text-[#543827]">
-                {metrics.paidOrders} <span className="text-xs font-normal text-[#9e6d42]">transaksi</span>
-              </p>
-            </div>
-
-            <div className="p-5 rounded-3xl bg-[#fcfaf7] border border-[#ebdccb] space-y-1 card-shadow">
-              <span className="text-xs font-semibold text-[#7e5434] flex items-center gap-1.5">
-                <ShoppingBag className="w-4 h-4 text-[#7e5434]" />
-                <span>Total Pesanan Masuk</span>
-              </span>
-              <p className="text-lg sm:text-2xl font-black text-[#543827]">
-                {metrics.totalOrders}
-              </p>
-            </div>
-
-            <div className="p-5 rounded-3xl bg-[#fcfaf7] border border-[#ebdccb] space-y-1 card-shadow">
-              <span className="text-xs font-semibold text-[#7e5434] flex items-center gap-1.5">
-                <PackagePlus className="w-4 h-4 text-purple-700" />
-                <span>Sisa Stok Akun Aktif</span>
-              </span>
-              <p className="text-lg sm:text-2xl font-black text-emerald-700">
-                {metrics.activeStockCount} <span className="text-xs font-normal text-[#9e6d42]">akun</span>
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Tab Selector */}
-        <div className="flex border-b border-[#ebdccb] gap-3 sm:gap-6 overflow-x-auto pb-1 scrollbar-none">
+        {/* MOBILE NAVIGATION BAR */}
+        <div className="md:hidden flex border-b border-[#ebdccb] bg-[#fcfaf7] overflow-x-auto p-2 gap-2 text-xs font-bold">
           <button
-            onClick={() => setActiveTab('orders')}
-            className={`pb-3 text-xs sm:text-sm font-bold flex items-center gap-2 border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
-              activeTab === 'orders'
-                ? 'border-[#543827] text-[#543827]'
-                : 'border-transparent text-[#9e6d42] hover:text-[#543827]'
+            onClick={() => setActiveTab('dashboard')}
+            className={`px-3 py-1.5 rounded-xl whitespace-nowrap ${
+              activeTab === 'dashboard' ? 'bg-[#543827] text-white' : 'text-[#7e5434]'
             }`}
           >
-            <Clock className="w-4 h-4" />
-            <span>Riwayat Transaksi ({orders.length})</span>
+            Dashboard
           </button>
-
           <button
-            onClick={() => setActiveTab('add-product')}
-            className={`pb-3 text-xs sm:text-sm font-bold flex items-center gap-2 border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
-              activeTab === 'add-product'
-                ? 'border-[#543827] text-[#543827]'
-                : 'border-transparent text-[#9e6d42] hover:text-[#543827]'
+            onClick={() => setActiveTab('produk')}
+            className={`px-3 py-1.5 rounded-xl whitespace-nowrap ${
+              activeTab === 'produk' ? 'bg-[#543827] text-white' : 'text-[#7e5434]'
             }`}
           >
-            <PlusCircle className="w-4 h-4" />
-            <span>Tambah Produk Baru</span>
+            Produk &amp; Varian
           </button>
-
           <button
-            onClick={() => setActiveTab('stock')}
-            className={`pb-3 text-xs sm:text-sm font-bold flex items-center gap-2 border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
-              activeTab === 'stock'
-                ? 'border-[#543827] text-[#543827]'
-                : 'border-transparent text-[#9e6d42] hover:text-[#543827]'
+            onClick={() => setActiveTab('pesanan')}
+            className={`px-3 py-1.5 rounded-xl whitespace-nowrap ${
+              activeTab === 'pesanan' ? 'bg-[#543827] text-white' : 'text-[#7e5434]'
             }`}
           >
-            <PackagePlus className="w-4 h-4" />
-            <span>Input Stok Akun (Bulk)</span>
+            Pesanan
           </button>
-
           <button
-            onClick={() => setActiveTab('variants')}
-            className={`pb-3 text-xs sm:text-sm font-bold flex items-center gap-2 border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
-              activeTab === 'variants'
-                ? 'border-[#543827] text-[#543827]'
-                : 'border-transparent text-[#9e6d42] hover:text-[#543827]'
+            onClick={() => setActiveTab('pelanggan')}
+            className={`px-3 py-1.5 rounded-xl whitespace-nowrap ${
+              activeTab === 'pelanggan' ? 'bg-[#543827] text-white' : 'text-[#7e5434]'
             }`}
           >
-            <Layers className="w-4 h-4" />
-            <span>Katalog &amp; Sisa Stok</span>
+            Pelanggan
+          </button>
+          <button
+            onClick={() => setActiveTab('pengaturan')}
+            className={`px-3 py-1.5 rounded-xl whitespace-nowrap ${
+              activeTab === 'pengaturan' ? 'bg-[#543827] text-white' : 'text-[#7e5434]'
+            }`}
+          >
+            Pengaturan
           </button>
         </div>
 
-        {/* TAB 1: ORDERS TABLE */}
-        {activeTab === 'orders' && (
-          <div className="rounded-3xl bg-[#fcfaf7] border border-[#ebdccb] overflow-hidden card-shadow">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-[#3b281a]">
-                <thead className="bg-[#f5efe6] text-[#7e5434] font-semibold uppercase tracking-wider text-[11px] border-b border-[#ebdccb]">
-                  <tr>
-                    <th className="px-4 py-3">Order ID</th>
-                    <th className="px-4 py-3">Aplikasi / Paket</th>
-                    <th className="px-4 py-3">Pembeli</th>
-                    <th className="px-4 py-3">Total Bayar</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Akun Diserahkan</th>
-                    <th className="px-4 py-3">Waktu</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#ebdccb]">
-                  {orders.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="px-4 py-8 text-center text-[#9e6d42]">
-                        Belum ada riwayat pesanan.
-                      </td>
-                    </tr>
-                  ) : (
-                    orders.map((o) => (
-                      <tr key={o.id} className="hover:bg-[#f5efe6] transition-colors">
-                        <td className="px-4 py-3 font-mono font-bold text-[#543827]">
-                          <Link href={`/order/${o.orderId}`} target="_blank" className="hover:underline">
-                            {o.orderId}
-                          </Link>
-                        </td>
-                        <td className="px-4 py-3">
-                          <p className="font-bold text-[#543827]">{o.productName}</p>
-                          <p className="text-[11px] text-[#7e5434]">{o.variantName}</p>
-                        </td>
-                        <td className="px-4 py-3">
-                          <p className="font-bold text-[#543827]">{o.customerName}</p>
-                          <a
-                            href={`https://wa.me/${o.customerWhatsapp.replace(/^0/, '62')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-[11px] text-emerald-700 hover:underline"
-                          >
-                            {o.customerWhatsapp}
-                          </a>
-                        </td>
-                        <td className="px-4 py-3 font-extrabold text-[#543827]">
-                          {formatRupiah(o.totalPayment)}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                              o.status === 'completed'
-                                ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
-                                : o.status === 'pending'
-                                ? 'bg-amber-50 text-amber-800 border border-amber-300'
-                                : 'bg-rose-50 text-rose-800 border border-rose-200'
+        {/* DYNAMIC CONTENT AREA */}
+        <main className="flex-1 p-6 lg:p-10 overflow-y-auto">
+          {/* TAB 1: DASHBOARD STATISTIK */}
+          {activeTab === 'dashboard' && metrics && (
+            <div className="space-y-8">
+              {/* Stats Overview Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="bg-[#fcfaf7] p-6 rounded-3xl border border-[#ebdccb] card-shadow flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs font-bold text-[#7e5434] uppercase tracking-wider">Total Pendapatan</span>
+                    <div className="w-10 h-10 rounded-2xl bg-[#f5efe6] flex items-center justify-center text-[#543827] font-bold">
+                      <DollarSign className="w-4 h-4 text-[#b88654]" />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-extrabold text-[#543827]">{formatRupiah(metrics.totalRevenue)}</h3>
+                    <span className="text-[10px] text-emerald-800 font-bold bg-emerald-50 px-2 py-0.5 rounded-md mt-1 inline-flex items-center gap-1 border border-emerald-200">
+                      <TrendingUp className="w-3 h-3" />
+                      <span>{metrics.paidOrders} pesanan lunas</span>
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-[#fcfaf7] p-6 rounded-3xl border border-[#ebdccb] card-shadow flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs font-bold text-[#7e5434] uppercase tracking-wider">Total Pesanan</span>
+                    <div className="w-10 h-10 rounded-2xl bg-[#f5efe6] flex items-center justify-center text-[#543827] font-bold">
+                      <ShoppingBag className="w-4 h-4 text-[#7e5434]" />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-extrabold text-[#543827]">{metrics.totalOrders}</h3>
+                    <span className="text-[10px] text-emerald-800 font-bold bg-emerald-50 px-2 py-0.5 rounded-md mt-1 inline-flex items-center gap-1 border border-emerald-200">
+                      <CheckCircle className="w-3 h-3" />
+                      <span>Semua riwayat transaksi</span>
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-[#fcfaf7] p-6 rounded-3xl border border-[#ebdccb] card-shadow flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs font-bold text-[#7e5434] uppercase tracking-wider">Total Produk</span>
+                    <div className="w-10 h-10 rounded-2xl bg-[#f5efe6] flex items-center justify-center text-[#543827] font-bold">
+                      <Layers className="w-4 h-4 text-[#7e5434]" />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-extrabold text-[#543827]">{products.length} Aplikasi</h3>
+                    <span className="text-[10px] text-[#7e5434] font-semibold bg-[#f5efe6] px-2 py-0.5 rounded-md mt-1 inline-block">
+                      {variants.length} Varian &amp; Paket Aktif
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-[#fcfaf7] p-6 rounded-3xl border border-[#ebdccb] card-shadow flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs font-bold text-[#7e5434] uppercase tracking-wider">Pengguna Aktif</span>
+                    <div className="w-10 h-10 rounded-2xl bg-[#f5efe6] flex items-center justify-center text-[#543827] font-bold">
+                      <Users className="w-4 h-4 text-[#7e5434]" />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-extrabold text-[#543827]">{metrics.totalCustomers} Member</h3>
+                    <span className="text-[10px] text-emerald-800 font-bold bg-emerald-50 px-2 py-0.5 rounded-md mt-1 inline-flex items-center gap-1 border border-emerald-200">
+                      <CheckCircle className="w-3 h-3" />
+                      <span>Pelanggan terdaftar</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Charts & Quick Insights Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 bg-[#fcfaf7] p-6 sm:p-8 rounded-3xl border border-[#ebdccb] card-shadow space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-extrabold text-base text-[#543827]">Statistik Stok &amp; Penjualan</h3>
+                      <p className="text-xs text-[#7e5434]">Ketersediaan stok akun dan performa katalog</p>
+                    </div>
+                    <span className="text-xs bg-[#f5efe6] text-[#543827] font-bold px-3 py-1 rounded-xl">
+                      Real-Time
+                    </span>
+                  </div>
+
+                  {/* Stock Bars */}
+                  <div className="space-y-4 pt-2">
+                    {variants.slice(0, 5).map((v) => (
+                      <div key={v.id} className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs font-bold text-[#543827]">
+                          <span>{v.productName} ({v.name})</span>
+                          <span className="text-[#9e6d42]">{v.stockCount} Akun Tersedia</span>
+                        </div>
+                        <div className="w-full h-3 bg-[#f5efe6] rounded-full overflow-hidden border border-[#ebdccb]">
+                          <div
+                            className={`h-full rounded-full ${
+                              v.stockCount > 0 ? 'bg-[#543827]' : 'bg-rose-600'
                             }`}
-                          >
-                            {o.status}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 max-w-xs">
-                          {o.accountDelivered ? (
-                            <div className="flex items-center gap-2">
-                              <span className="font-mono text-[11px] truncate text-[#543827]">
-                                {o.accountDelivered}
-                              </span>
-                              <button
-                                onClick={() => handleCopyText(o.accountDelivered!, o.orderId)}
-                                className="p-1 text-[#9e6d42] hover:text-[#543827]"
-                                title="Salin Akun"
-                              >
-                                {copiedOrderId === o.orderId ? (
-                                  <Check className="w-3.5 h-3.5 text-emerald-700" />
-                                ) : (
-                                  <Copy className="w-3.5 h-3.5" />
-                                )}
-                              </button>
-                            </div>
-                          ) : (
-                            <span className="text-[#9e6d42]">-</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-[#9e6d42] text-[11px] whitespace-nowrap">
-                          {new Date(o.createdAt).toLocaleString('id-ID')}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+                            style={{ width: `${Math.min(100, Math.max(8, v.stockCount * 15))}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
-        {/* TAB 2: INPUT PRODUK BARU */}
-        {activeTab === 'add-product' && (
-          <div className="max-w-3xl bg-[#fcfaf7] border border-[#ebdccb] rounded-3xl p-6 sm:p-8 space-y-6 card-shadow">
-            <div className="flex items-center gap-2.5">
-              <BearHead className="w-6 h-6 text-[#7e5434]" />
-              <div>
-                <h2 className="text-base font-bold text-[#543827]">Tambah Produk Aplikasi Baru</h2>
-                <p className="text-xs text-[#7e5434] mt-0.5">
-                  Publikasikan akun aplikasi baru ke katalog Sepia Store lengkap dengan varian paket dan harganya.
-                </p>
+                <div className="bg-[#fcfaf7] p-6 sm:p-8 rounded-3xl border border-[#ebdccb] card-shadow flex flex-col justify-between space-y-6">
+                  <div>
+                    <h3 className="font-extrabold text-base text-[#543827] mb-1">Status Pembayaran</h3>
+                    <p className="text-xs text-[#7e5434] mb-4">Rincian status pesanan masuk</p>
+
+                    <div className="space-y-3 pt-2">
+                      <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="w-4 h-4 text-emerald-700" />
+                          <span className="text-xs font-bold text-emerald-900">Selesai / Lunas</span>
+                        </div>
+                        <span className="font-black text-xs text-emerald-900">{metrics.paidOrders}</span>
+                      </div>
+
+                      <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-amber-700" />
+                          <span className="text-xs font-bold text-amber-900">Pending / Menunggu</span>
+                        </div>
+                        <span className="font-black text-xs text-amber-900">
+                          {metrics.totalOrders - metrics.paidOrders}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-[#ebdccb] text-xs text-[#7e5434]">
+                    <span className="flex items-center gap-1.5 font-bold text-[#543827] mb-1">
+                      <ShieldCheck className="w-4 h-4 text-emerald-700" />
+                      <span>Pakasir v2 Terhubung</span>
+                    </span>
+                    <p className="text-[11px]">QRIS otomatis memproses pembayaran dan menyerahkan stok akun.</p>
+                  </div>
+                </div>
               </div>
             </div>
+          )}
 
-            <form onSubmit={handleCreateProduct} className="space-y-6">
-              {/* Product Basic Info */}
-              <div className="space-y-4 p-4 rounded-2xl bg-[#f5efe6] border border-[#ebdccb]">
-                <h3 className="text-xs font-bold text-[#543827] uppercase tracking-wider">
-                  1. Informasi Produk
-                </h3>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-[#543827] mb-1.5">
-                      Nama Aplikasi / Produk *
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Contoh: Disney+ Hotstar VIP"
-                      value={newProductName}
-                      onChange={(e) => setNewProductName(e.target.value)}
-                      required
-                      className="w-full bg-white border border-[#ebdccb] focus:border-[#543827] rounded-xl px-3.5 py-2.5 text-sm text-[#543827] placeholder-[#9e6d42] focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-[#543827] mb-1.5">
-                      Kategori *
-                    </label>
-                    <select
-                      value={newCategoryId}
-                      onChange={(e) => setNewCategoryId(e.target.value)}
-                      className="w-full bg-white border border-[#ebdccb] focus:border-[#543827] rounded-xl px-3.5 py-2.5 text-sm text-[#543827] focus:outline-none cursor-pointer"
-                    >
-                      {categories.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-[#543827] mb-1.5">
-                      URL Gambar Sampul (Cover Image)
-                    </label>
-                    <input
-                      type="url"
-                      placeholder="https://images.unsplash.com/... (atau kosongkan)"
-                      value={newImageUrl}
-                      onChange={(e) => setNewImageUrl(e.target.value)}
-                      className="w-full bg-white border border-[#ebdccb] focus:border-[#543827] rounded-xl px-3.5 py-2.5 text-sm text-[#543827] placeholder-[#9e6d42] focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-[#543827] mb-1.5">
-                      Badge / Label Khusus (Opsional)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Contoh: HOT, TERLARIS, HEMAT"
-                      value={newBadge}
-                      onChange={(e) => setNewBadge(e.target.value)}
-                      className="w-full bg-white border border-[#ebdccb] focus:border-[#543827] rounded-xl px-3.5 py-2.5 text-sm text-[#543827] placeholder-[#9e6d42] focus:outline-none uppercase"
-                    />
-                  </div>
-                </div>
-
+          {/* TAB 2: PRODUK & VARIAN */}
+          {activeTab === 'produk' && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-[#543827] mb-1.5">
-                    Deskripsi Singkat Aplikasi *
-                  </label>
-                  <textarea
-                    rows={2}
-                    placeholder="Contoh: Nonton film Disney, Marvel, dan serial lokal tanpa iklan kualitas Full HD. Garansi full sesuai durasi."
-                    value={newDescription}
-                    onChange={(e) => setNewDescription(e.target.value)}
+                  <h2 className="text-xl font-extrabold text-[#543827]">Manajemen Produk &amp; Varian</h2>
+                  <p className="text-xs text-[#7e5434]">Kelola aplikasi digital, varian paket langganan, dan update stok massal.</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setIsBulkStockModalOpen(true)}
+                    className="bg-[#ebdccb] hover:bg-[#dec4a6] text-[#543827] font-bold px-4 py-3 rounded-2xl text-xs transition-colors border border-[#dec4a6] flex items-center gap-2 cursor-pointer shadow-sm"
+                  >
+                    <FileText className="w-4 h-4 text-[#7e5434]" />
+                    <span>Bulk Stok (email|password|catatan)</span>
+                  </button>
+                  <button
+                    onClick={() => setIsProductModalOpen(true)}
+                    className="bg-[#543827] hover:bg-[#67442d] text-[#fcfaf7] font-bold px-5 py-3 rounded-2xl text-xs transition-colors shadow-md flex items-center gap-2 cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Tambah Produk</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Products Table */}
+              <div className="bg-[#fcfaf7] rounded-3xl border border-[#ebdccb] card-shadow overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="bg-[#f5efe6] border-b border-[#ebdccb] text-[#7e5434] uppercase tracking-wider text-[10px]">
+                        <th className="py-4 px-6 font-extrabold">Nama Aplikasi &amp; Varian</th>
+                        <th className="py-4 px-6 font-extrabold">Kategori</th>
+                        <th className="py-4 px-6 font-extrabold">Rentang Harga</th>
+                        <th className="py-4 px-6 font-extrabold">Total Stok Varian</th>
+                        <th className="py-4 px-6 font-extrabold text-right">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#ebdccb] text-[#3b281a]">
+                      {products.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="py-8 px-6 text-center text-[#9e6d42]">
+                            Belum ada produk di katalog toko.
+                          </td>
+                        </tr>
+                      ) : (
+                        products.map((prod) => {
+                          const priceStr =
+                            prod.minPrice === prod.maxPrice
+                              ? formatRupiah(prod.minPrice)
+                              : `${formatRupiah(prod.minPrice)} - ${formatRupiah(prod.maxPrice)}`;
+
+                          return (
+                            <tr key={prod.id} className="hover:bg-[#f5efe6] transition-colors">
+                              <td className="py-4 px-6 font-bold text-[#543827]">
+                                <div className="flex items-center gap-3">
+                                  <img
+                                    src={prod.imageUrl}
+                                    alt={prod.name}
+                                    className="w-10 h-10 rounded-xl object-cover border border-[#dec4a6] shrink-0"
+                                  />
+                                  <div>
+                                    <span className="text-sm font-extrabold text-[#543827]">{prod.name}</span>
+                                    <span className="block text-[11px] text-[#7e5434] font-normal mb-1">
+                                      {prod.description}
+                                    </span>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                      {prod.variants.map((v) => (
+                                        <span
+                                          key={v.id}
+                                          className="bg-[#f5efe6] border border-[#ebdccb] text-[#543827] px-2 py-0.5 rounded text-[10px] inline-block font-medium"
+                                        >
+                                          {v.name} ({formatRupiah(v.price)} | Stok: {v.stockCount})
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="py-4 px-6">
+                                <span className="bg-[#ebdccb] text-[#543827] px-2.5 py-1 rounded-md font-semibold text-[10px]">
+                                  {categories.find((c) => c.id === prod.categoryId)?.name || 'Katalog'}
+                                </span>
+                              </td>
+                              <td className="py-4 px-6 font-extrabold text-[#543827]">{priceStr}</td>
+                              <td className="py-4 px-6 font-bold">
+                                <span
+                                  className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                                    prod.totalStock > 0
+                                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
+                                      : 'bg-rose-50 text-rose-800 border border-rose-200'
+                                  }`}
+                                >
+                                  {prod.totalStock} Akun
+                                </span>
+                              </td>
+                              <td className="py-4 px-6 text-right space-x-2">
+                                <button
+                                  onClick={() => {
+                                    setBulkTargetProductId(prod.id);
+                                    if (prod.variants.length > 0) {
+                                      setBulkTargetVariantId(prod.variants[0].id);
+                                    }
+                                    setIsBulkStockModalOpen(true);
+                                  }}
+                                  className="bg-[#f5efe6] hover:bg-[#ebdccb] text-[#543827] font-bold px-3 py-1.5 rounded-xl transition-colors cursor-pointer"
+                                >
+                                  + Stok
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteProduct(prod.id, prod.name)}
+                                  className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold px-3 py-1.5 rounded-xl transition-colors cursor-pointer"
+                                >
+                                  Hapus
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 3: PESANAN & TRANSAKSI */}
+          {activeTab === 'pesanan' && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-extrabold text-[#543827]">Daftar Pesanan &amp; Transaksi</h2>
+                  <p className="text-xs text-[#7e5434]">Pantau riwayat pembayaran pembeli dan status lisensi.</p>
+                </div>
+              </div>
+
+              <div className="bg-[#fcfaf7] rounded-3xl border border-[#ebdccb] card-shadow overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="bg-[#f5efe6] border-b border-[#ebdccb] text-[#7e5434] uppercase tracking-wider text-[10px]">
+                        <th className="py-4 px-6 font-extrabold">ID Pesanan</th>
+                        <th className="py-4 px-6 font-extrabold">Pelanggan</th>
+                        <th className="py-4 px-6 font-extrabold">Produk &amp; Varian</th>
+                        <th className="py-4 px-6 font-extrabold">Total</th>
+                        <th className="py-4 px-6 font-extrabold">Status</th>
+                        <th className="py-4 px-6 font-extrabold">Akun Diserahkan</th>
+                        <th className="py-4 px-6 font-extrabold text-right">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#ebdccb] text-[#3b281a]">
+                      {filteredOrders.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="py-8 px-6 text-center text-[#9e6d42]">
+                            Belum ada riwayat transaksi yang cocok.
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredOrders.map((o) => (
+                          <tr key={o.id} className="hover:bg-[#f5efe6] transition-colors">
+                            <td className="py-4 px-6 font-mono font-bold text-[#543827]">
+                              <Link href={`/order/${o.orderId}`} target="_blank" className="hover:underline">
+                                {o.orderId}
+                              </Link>
+                            </td>
+                            <td className="py-4 px-6">
+                              <p className="font-bold text-[#543827]">{o.customerName}</p>
+                              <a
+                                href={`https://wa.me/${o.customerWhatsapp.replace(/^0/, '62')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[11px] text-emerald-800 hover:underline"
+                              >
+                                {o.customerWhatsapp}
+                              </a>
+                            </td>
+                            <td className="py-4 px-6">
+                              <p className="font-semibold text-[#543827]">{o.productName}</p>
+                              <span className="text-[#7e5434] text-[10px] block">{o.variantName}</span>
+                            </td>
+                            <td className="py-4 px-6 font-extrabold text-[#543827]">
+                              {formatRupiah(o.totalPayment)}
+                            </td>
+                            <td className="py-4 px-6">
+                              <span
+                                className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                                  o.status === 'completed'
+                                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
+                                    : o.status === 'pending'
+                                    ? 'bg-amber-50 text-amber-800 border border-amber-300'
+                                    : 'bg-rose-50 text-rose-800 border border-rose-200'
+                                }`}
+                              >
+                                {o.status === 'completed' ? 'Selesai' : o.status}
+                              </span>
+                            </td>
+                            <td className="py-4 px-6 max-w-xs">
+                              {o.accountDelivered ? (
+                                <div className="flex items-center gap-2">
+                                  <span className="font-mono text-[11px] truncate text-[#543827]">
+                                    {o.accountDelivered}
+                                  </span>
+                                  <button
+                                    onClick={() => handleCopyText(o.accountDelivered!, o.orderId)}
+                                    className="p-1 text-[#7e5434] hover:text-[#543827] cursor-pointer"
+                                    title="Salin Akun"
+                                  >
+                                    {copiedOrderId === o.orderId ? (
+                                      <Check className="w-3.5 h-3.5 text-emerald-700" />
+                                    ) : (
+                                      <Copy className="w-3.5 h-3.5" />
+                                    )}
+                                  </button>
+                                </div>
+                              ) : (
+                                <span className="text-[#9e6d42]">-</span>
+                              )}
+                            </td>
+                            <td className="py-4 px-6 text-right">
+                              <Link
+                                href={`/order/${o.orderId}`}
+                                target="_blank"
+                                className="bg-[#f5efe6] hover:bg-[#ebdccb] text-[#543827] font-bold px-3 py-1.5 rounded-xl transition-colors inline-block"
+                              >
+                                Detail
+                              </Link>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 4: PELANGGAN */}
+          {activeTab === 'pelanggan' && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-xl font-extrabold text-[#543827]">Daftar Pelanggan Terdaftar</h2>
+                <p className="text-xs text-[#7e5434]">Pengguna yang memiliki akun member di Sepia Store.</p>
+              </div>
+
+              <div className="bg-[#fcfaf7] rounded-3xl border border-[#ebdccb] card-shadow overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="bg-[#f5efe6] border-b border-[#ebdccb] text-[#7e5434] uppercase tracking-wider text-[10px]">
+                        <th className="py-4 px-6 font-extrabold">Nama Pelanggan</th>
+                        <th className="py-4 px-6 font-extrabold">WhatsApp</th>
+                        <th className="py-4 px-6 font-extrabold">Email</th>
+                        <th className="py-4 px-6 font-extrabold">Tanggal Daftar</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#ebdccb] text-[#3b281a]">
+                      {customers.length === 0 ? (
+                        <tr>
+                          <td colSpan={4} className="py-8 px-6 text-center text-[#9e6d42]">
+                            Belum ada pelanggan yang mendaftar akun.
+                          </td>
+                        </tr>
+                      ) : (
+                        customers.map((c) => (
+                          <tr key={c.id} className="hover:bg-[#f5efe6] transition-colors">
+                            <td className="py-4 px-6 font-bold text-[#543827]">{c.name}</td>
+                            <td className="py-4 px-6 font-mono">
+                              <a
+                                href={`https://wa.me/${c.whatsapp.replace(/^0/, '62')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-emerald-800 hover:underline"
+                              >
+                                {c.whatsapp}
+                              </a>
+                            </td>
+                            <td className="py-4 px-6 text-[#7e5434]">{c.email || '-'}</td>
+                            <td className="py-4 px-6 text-[#9e6d42]">
+                              {new Date(c.createdAt).toLocaleDateString('id-ID', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              })}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 5: PENGATURAN */}
+          {activeTab === 'pengaturan' && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-xl font-extrabold text-[#543827]">Pengaturan Toko</h2>
+                <p className="text-xs text-[#7e5434]">Atur profil toko, status gateway pembayaran, dan informasi kontak.</p>
+              </div>
+
+              <div className="bg-[#fcfaf7] rounded-3xl border border-[#ebdccb] card-shadow p-6 sm:p-8 space-y-6 max-w-2xl">
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold text-[#543827]">Nama Toko</label>
+                  <input
+                    type="text"
+                    defaultValue="Sepia Store"
+                    className="w-full bg-[#f5efe6] border border-[#ebdccb] rounded-xl px-4 py-2.5 text-xs text-[#543827] font-semibold focus:outline-none"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold text-[#543827]">Username Administrator</label>
+                  <input
+                    type="text"
+                    value={adminUsername}
+                    disabled
+                    className="w-full bg-[#f5efe6] border border-[#ebdccb] rounded-xl px-4 py-2.5 text-xs text-[#543827] font-semibold focus:outline-none opacity-80"
+                  />
+                  <p className="text-[10px] text-[#9e6d42]">Dikonfigurasi via variabel ADMIN_USERNAME.</p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold text-[#543827]">Payment Gateway Status</label>
+                  <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 font-semibold flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-emerald-700" />
+                    <span>Pakasir API v2 Aktif &amp; Terintegrasi</span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => showToast('Disimpan', 'Pengaturan toko berhasil diperbarui.')}
+                  className="bg-[#543827] hover:bg-[#67442d] text-[#fcfaf7] font-bold px-6 py-3 rounded-2xl text-xs transition-colors shadow-md cursor-pointer"
+                >
+                  Simpan Perubahan
+                </button>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* MODAL TAMBAH PRODUK & VARIAN */}
+      {isProductModalOpen && (
+        <div className="fixed inset-0 z-50 bg-[#2d1c13]/60 flex items-center justify-center p-4 animate-in fade-in">
+          <div
+            className="bg-[#fcfaf7] w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl p-6 sm:p-8 shadow-2xl border border-[#ebdccb] relative text-[#3b281a]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setIsProductModalOpen(false)}
+              className="absolute top-5 right-5 w-8 h-8 rounded-full bg-[#f5efe6] hover:bg-[#ebdccb] flex items-center justify-center text-[#543827] transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <h3 className="text-xl font-extrabold text-[#543827] mb-4">Tambah Produk Baru</h3>
+
+            <form onSubmit={handleAddProductSubmit} className="space-y-5 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="font-bold text-[#543827]">Nama Aplikasi *</label>
+                  <input
+                    type="text"
                     required
-                    className="w-full bg-white border border-[#ebdccb] focus:border-[#543827] rounded-xl p-3 text-xs text-[#543827] placeholder-[#9e6d42] focus:outline-none"
+                    placeholder="Contoh: Fokus Sesi"
+                    value={prodName}
+                    onChange={(e) => setProdName(e.target.value)}
+                    className="w-full bg-[#f5efe6] border border-[#ebdccb] rounded-xl px-4 py-2.5 text-[#543827] focus:outline-none focus:border-[#543827]"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="font-bold text-[#543827]">Kategori *</label>
+                  <select
+                    value={prodCategory}
+                    onChange={(e) => setProdCategory(e.target.value)}
+                    className="w-full bg-[#f5efe6] border border-[#ebdccb] rounded-xl px-4 py-2.5 text-[#543827] focus:outline-none font-semibold cursor-pointer"
+                  >
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="font-bold text-[#543827]">URL Gambar Sampul (Opsional)</label>
+                  <input
+                    type="url"
+                    placeholder="https://images.unsplash.com/..."
+                    value={prodImageUrl}
+                    onChange={(e) => setProdImageUrl(e.target.value)}
+                    className="w-full bg-[#f5efe6] border border-[#ebdccb] rounded-xl px-4 py-2.5 text-[#543827] focus:outline-none"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="font-bold text-[#543827]">Badge / Label (Opsional)</label>
+                  <input
+                    type="text"
+                    placeholder="HOT, PILIHAN PENDIRI, dll."
+                    value={prodBadge}
+                    onChange={(e) => setProdBadge(e.target.value)}
+                    className="w-full bg-[#f5efe6] border border-[#ebdccb] rounded-xl px-4 py-2.5 text-[#543827] focus:outline-none uppercase"
                   />
                 </div>
               </div>
 
-              {/* Variants Form */}
-              <div className="space-y-4 p-4 rounded-2xl bg-[#f5efe6] border border-[#ebdccb]">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold text-[#543827] uppercase tracking-wider">
-                    2. Pilihan Paket &amp; Harga Varian
-                  </h3>
-                  <button
-                    type="button"
-                    onClick={handleAddVariantRow}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#ebdccb] hover:bg-[#dec4a6] text-[#543827] border border-[#dec4a6] transition-colors cursor-pointer"
-                  >
-                    <PlusCircle className="w-3.5 h-3.5" />
-                    <span>Tambah Varian Lain</span>
-                  </button>
-                </div>
-
-                <div className="space-y-3">
-                  {newVariants.map((variant, idx) => (
-                    <div
-                      key={idx}
-                      className="p-4 rounded-2xl bg-white border border-[#ebdccb] space-y-3 relative shadow-sm"
-                    >
-                      <div className="flex items-center justify-between pb-2 border-b border-[#ebdccb]">
-                        <span className="text-xs font-bold text-[#543827]">
-                          Varian #{idx + 1}
-                        </span>
-                        {newVariants.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveVariantRow(idx)}
-                            className="text-rose-600 hover:text-rose-800 p-1 text-xs flex items-center gap-1 cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            <span>Hapus</span>
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div>
-                          <label className="block text-[11px] text-[#7e5434] mb-1 font-semibold">
-                            Nama Paket Varian *
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="Misal: 1 Bulan Private"
-                            value={variant.name}
-                            onChange={(e) => handleVariantChange(idx, 'name', e.target.value)}
-                            required
-                            className="w-full bg-[#f5efe6] border border-[#ebdccb] rounded-lg px-3 py-2 text-xs text-[#543827] focus:outline-none focus:border-[#543827]"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[11px] text-[#7e5434] mb-1 font-semibold">
-                            Durasi (Hari) *
-                          </label>
-                          <input
-                            type="number"
-                            placeholder="30"
-                            value={variant.durationDays}
-                            onChange={(e) => handleVariantChange(idx, 'durationDays', Number(e.target.value))}
-                            required
-                            className="w-full bg-[#f5efe6] border border-[#ebdccb] rounded-lg px-3 py-2 text-xs text-[#543827] focus:outline-none focus:border-[#543827]"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[11px] text-[#7e5434] mb-1 font-semibold">
-                            Harga Jual (Rp) *
-                          </label>
-                          <input
-                            type="number"
-                            placeholder="25000"
-                            value={variant.price}
-                            onChange={(e) => handleVariantChange(idx, 'price', e.target.value)}
-                            required
-                            className="w-full bg-[#f5efe6] border border-[#ebdccb] rounded-lg px-3 py-2 text-xs text-[#543827] focus:outline-none focus:border-[#543827]"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[11px] text-[#7e5434] mb-1 font-semibold">
-                            Harga Coret Normal (Rp)
-                          </label>
-                          <input
-                            type="number"
-                            placeholder="45000"
-                            value={variant.originalPrice}
-                            onChange={(e) => handleVariantChange(idx, 'originalPrice', e.target.value)}
-                            className="w-full bg-[#f5efe6] border border-[#ebdccb] rounded-lg px-3 py-2 text-xs text-[#543827] focus:outline-none focus:border-[#543827]"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[11px] text-[#7e5434] mb-1 font-semibold">
-                            Catatan Paket
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="Contoh: 1 Profil Sharing, Bebas Kunci PIN"
-                            value={variant.description}
-                            onChange={(e) => handleVariantChange(idx, 'description', e.target.value)}
-                            className="w-full bg-[#f5efe6] border border-[#ebdccb] rounded-lg px-3 py-2 text-xs text-[#543827] focus:outline-none focus:border-[#543827]"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Feedback messages */}
-              {productSuccessMessage && (
-                <div className="flex items-center gap-2 p-3 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs">
-                  <CheckCircle className="w-4 h-4 shrink-0" />
-                  <span>{productSuccessMessage}</span>
-                </div>
-              )}
-
-              {productErrorMessage && (
-                <div className="flex items-center gap-2 p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{productErrorMessage}</span>
-                </div>
-              )}
-
-              {/* Submit button */}
-              <button
-                type="submit"
-                disabled={isCreatingProduct}
-                className="w-full py-3.5 rounded-2xl font-bold text-xs bg-[#543827] hover:bg-[#67442d] text-white transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md"
-              >
-                {isCreatingProduct ? <Loader2 className="w-4 h-4 animate-spin" /> : <BearPaw className="w-4 h-4" />}
-                <span>Simpan dan Terbitkan Produk Baru</span>
-              </button>
-            </form>
-          </div>
-        )}
-
-        {/* TAB 3: BULK STOCK INJECTION */}
-        {activeTab === 'stock' && (
-          <div className="max-w-2xl bg-[#fcfaf7] border border-[#ebdccb] rounded-3xl p-6 sm:p-8 space-y-6 card-shadow">
-            <div className="flex items-center gap-2">
-              <BearPaw className="w-5 h-5 text-[#7e5434]" />
-              <div>
-                <h2 className="text-base font-bold text-[#543827]">Input Massal (Bulk) Stok Akun</h2>
-                <p className="text-xs text-[#7e5434] mt-0.5">
-                  Pilih varian paket, lalu paste kredensial akun di textarea (1 baris per akun).
-                </p>
-              </div>
-            </div>
-
-            <form onSubmit={handleAddStock} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-[#543827] mb-1.5">
-                  Pilih Produk &amp; Varian
-                </label>
-                <select
-                  value={selectedVariantId}
-                  onChange={(e) => setSelectedVariantId(e.target.value)}
-                  className="w-full bg-[#f5efe6] border border-[#ebdccb] focus:border-[#543827] rounded-xl px-3.5 py-2.5 text-sm text-[#543827] focus:outline-none"
-                >
-                  {variants.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.productName} : {v.name} (Sisa Stok: {v.stockCount})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-[#543827] mb-1.5">
-                  Daftar Akun (1 Akun Per Baris)
-                </label>
+              <div className="space-y-1.5">
+                <label className="font-bold text-[#543827]">Deskripsi Singkat (Tagline) *</label>
                 <textarea
-                  rows={8}
-                  placeholder={`Email: user1@gmail.com | Pass: Sepia#123 | Profil: 2 (PIN: 1122)\nEmail: user2@gmail.com | Pass: Sepia#123 | Profil: 3 (PIN: 3344)\nhttps://spotify.com/family/join/sepia-token-example`}
-                  value={rawAccounts}
-                  onChange={(e) => setRawAccounts(e.target.value)}
+                  rows={2}
                   required
-                  className="w-full bg-[#f5efe6] border border-[#ebdccb] focus:border-[#543827] rounded-xl p-3.5 text-xs font-mono text-[#543827] placeholder-[#9e6d42] focus:outline-none leading-relaxed"
+                  placeholder="Timer kerja fokus dengan blok jadwal..."
+                  value={prodTagline}
+                  onChange={(e) => setProdTagline(e.target.value)}
+                  className="w-full bg-[#f5efe6] border border-[#ebdccb] rounded-xl px-4 py-2.5 text-[#543827] focus:outline-none"
                 />
               </div>
 
-              {stockMessage && (
-                <div className="flex items-center gap-2 p-3 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs">
-                  <CheckCircle className="w-4 h-4 shrink-0" />
-                  <span>{stockMessage}</span>
+              {/* VARIANT BUILDER SECTION */}
+              <div className="pt-2 border-t border-[#ebdccb] space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-bold text-[#543827] text-sm">Varian Produk (Tier / Lisensi / Durasi)</h4>
+                    <p className="text-[10px] text-[#7e5434]">Tambahkan opsi variasi dengan harga dan durasi.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setModalVariants((prev) => [
+                        ...prev,
+                        { name: '', durationDays: 30, price: '', originalPrice: '', description: '' },
+                      ])
+                    }
+                    className="bg-[#ebdccb] hover:bg-[#dec4a6] text-[#543827] font-bold px-3 py-1.5 rounded-xl transition-colors cursor-pointer flex items-center gap-1"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Tambah Varian</span>
+                  </button>
                 </div>
-              )}
 
-              <button
-                type="submit"
-                disabled={isSubmittingStock}
-                className="w-full py-3.5 rounded-2xl font-bold text-xs bg-[#543827] hover:bg-[#67442d] text-white transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md"
-              >
-                {isSubmittingStock ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                <span>Simpan Stok Akun Sekarang</span>
-              </button>
-            </form>
-          </div>
-        )}
+                <div className="space-y-2.5">
+                  {modalVariants.map((v, idx) => (
+                    <div
+                      key={idx}
+                      className="flex flex-col sm:flex-row items-center gap-2 bg-[#f5efe6] p-3 rounded-2xl border border-[#ebdccb]"
+                    >
+                      <input
+                        type="text"
+                        placeholder="Nama Varian (Cth: Lisensi Pro)"
+                        value={v.name}
+                        onChange={(e) => {
+                          const updated = [...modalVariants];
+                          updated[idx].name = e.target.value;
+                          setModalVariants(updated);
+                        }}
+                        className="flex-1 bg-white border border-[#ebdccb] rounded-xl px-3 py-2 text-[#543827] focus:outline-none text-xs w-full sm:w-auto"
+                        required
+                      />
+                      <input
+                        type="number"
+                        placeholder="Harga (Rp)"
+                        value={v.price}
+                        onChange={(e) => {
+                          const updated = [...modalVariants];
+                          updated[idx].price = Number(e.target.value);
+                          setModalVariants(updated);
+                        }}
+                        className="w-full sm:w-28 bg-white border border-[#ebdccb] rounded-xl px-3 py-2 text-[#543827] focus:outline-none text-xs"
+                        required
+                      />
+                      <input
+                        type="number"
+                        placeholder="Durasi Hari"
+                        value={v.durationDays}
+                        onChange={(e) => {
+                          const updated = [...modalVariants];
+                          updated[idx].durationDays = Number(e.target.value);
+                          setModalVariants(updated);
+                        }}
+                        className="w-full sm:w-24 bg-white border border-[#ebdccb] rounded-xl px-3 py-2 text-[#543827] focus:outline-none text-xs"
+                        required
+                      />
+                      {modalVariants.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setModalVariants((prev) => prev.filter((_, i) => i !== idx))}
+                          className="text-rose-600 hover:text-rose-800 p-2 cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-        {/* TAB 4: VARIANTS & STOCKS OVERVIEW */}
-        {activeTab === 'variants' && (
-          <div className="space-y-6">
-            {/* Products List with Delete Option */}
-            <div className="rounded-3xl bg-[#fcfaf7] border border-[#ebdccb] p-6 space-y-4 card-shadow">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-[#543827] flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-[#7e5434]" />
-                  <span>Daftar Produk Aktif di Toko ({products.length})</span>
-                </h3>
+              <div className="pt-4 border-t border-[#ebdccb] flex items-center justify-end gap-3">
                 <button
-                  onClick={() => setActiveTab('add-product')}
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#543827] text-white hover:bg-[#67442d] transition-colors flex items-center gap-1.5 shadow-sm"
+                  type="button"
+                  onClick={() => setIsProductModalOpen(false)}
+                  className="bg-[#ebdccb] hover:bg-[#dec4a6] text-[#543827] font-bold px-5 py-2.5 rounded-xl transition-colors cursor-pointer"
                 >
-                  <PlusCircle className="w-3.5 h-3.5" />
-                  <span>Tambah Produk</span>
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingProduct}
+                  className="bg-[#543827] hover:bg-[#67442d] text-[#fcfaf7] font-bold px-6 py-2.5 rounded-xl transition-colors shadow-md flex items-center gap-1.5 cursor-pointer"
+                >
+                  {isSubmittingProduct ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                  <span>Simpan Produk &amp; Varian</span>
                 </button>
               </div>
+            </form>
+          </div>
+        </div>
+      )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {products.map((p) => (
-                  <div
-                    key={p.id}
-                    className="p-4 rounded-2xl bg-[#f5efe6] border border-[#ebdccb] flex items-center justify-between gap-3"
+      {/* MODAL BULK STOK (email|password|catatan) */}
+      {isBulkStockModalOpen && (
+        <div className="fixed inset-0 z-50 bg-[#2d1c13]/60 flex items-center justify-center p-4 animate-in fade-in">
+          <div
+            className="bg-[#fcfaf7] w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl p-6 sm:p-8 shadow-2xl border border-[#ebdccb] relative text-[#3b281a]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setIsBulkStockModalOpen(false)}
+              className="absolute top-5 right-5 w-8 h-8 rounded-full bg-[#f5efe6] hover:bg-[#ebdccb] flex items-center justify-center text-[#543827] transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <h3 className="text-xl font-extrabold text-[#543827] mb-1">
+              Bulk Tambah Stok (email|password|catatan)
+            </h3>
+            <p className="text-xs text-[#7e5434] mb-4">
+              Paste daftar akun/stok per baris. Sistem otomatis memparsing format dan menambahkannya ke produk &amp; varian terpilih.
+            </p>
+
+            <div className="space-y-4 text-xs">
+              {/* Target Product & Variant Selector */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[#f5efe6] p-4 rounded-2xl border border-[#ebdccb]">
+                <div className="space-y-1">
+                  <label className="font-bold text-[#543827]">Pilih Produk Target</label>
+                  <select
+                    value={bulkTargetProductId}
+                    onChange={(e) => {
+                      const pId = e.target.value;
+                      setBulkTargetProductId(pId);
+                      const prod = products.find((p) => p.id === pId);
+                      if (prod && prod.variants.length > 0) {
+                        setBulkTargetVariantId(prod.variants[0].id);
+                      }
+                    }}
+                    className="w-full bg-white border border-[#ebdccb] rounded-xl px-3 py-2 text-[#543827] font-semibold focus:outline-none cursor-pointer"
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <img
-                        src={p.imageUrl}
-                        alt={p.name}
-                        className="w-12 h-12 rounded-xl object-cover border border-[#dec4a6] shrink-0"
-                      />
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-[#543827] truncate">{p.name}</p>
-                        <p className="text-[11px] text-[#7e5434] truncate">{p.description}</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleDeleteProduct(p.id, p.name)}
-                      className="p-2 text-[#9e6d42] hover:text-rose-700 hover:bg-rose-50 rounded-xl transition-colors shrink-0"
-                      title="Hapus Produk"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Individual Variants Stock Table */}
-            <div className="rounded-3xl bg-[#fcfaf7] border border-[#ebdccb] overflow-hidden card-shadow">
-              <div className="p-4 border-b border-[#ebdccb] bg-[#f5efe6]">
-                <h3 className="text-xs font-bold text-[#543827] uppercase tracking-wider">
-                  Rincian Stok Per Varian
-                </h3>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-[#3b281a]">
-                  <thead className="bg-[#f5efe6] text-[#7e5434] font-semibold uppercase tracking-wider text-[11px] border-b border-[#ebdccb]">
-                    <tr>
-                      <th className="px-4 py-3">Produk</th>
-                      <th className="px-4 py-3">Varian Paket</th>
-                      <th className="px-4 py-3">Harga Jual</th>
-                      <th className="px-4 py-3">Harga Asli</th>
-                      <th className="px-4 py-3">Stok Belum Terjual</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#ebdccb]">
-                    {variants.map((v) => (
-                      <tr key={v.id} className="hover:bg-[#f5efe6] transition-colors">
-                        <td className="px-4 py-3 font-bold text-[#543827]">{v.productName}</td>
-                        <td className="px-4 py-3 text-[#7e5434]">{v.name}</td>
-                        <td className="px-4 py-3 font-extrabold text-[#543827]">
-                          {formatRupiah(v.price)}
-                        </td>
-                        <td className="px-4 py-3 text-[#9e6d42] line-through">
-                          {formatRupiah(v.originalPrice)}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                              v.stockCount > 0
-                                ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
-                                : 'bg-rose-50 text-rose-800 border border-rose-200'
-                            }`}
-                          >
-                            {v.stockCount} Akun
-                          </span>
-                        </td>
-                      </tr>
+                    {products.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
                     ))}
-                  </tbody>
-                </table>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-[#543827]">Pilih Varian Target</label>
+                  <select
+                    value={bulkTargetVariantId}
+                    onChange={(e) => setBulkTargetVariantId(e.target.value)}
+                    className="w-full bg-white border border-[#ebdccb] rounded-xl px-3 py-2 text-[#543827] font-semibold focus:outline-none cursor-pointer"
+                  >
+                    {variants
+                      .filter((v) => v.productId === bulkTargetProductId)
+                      .map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.name} (Stok Saat Ini: {v.stockCount})
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Textarea input */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-[#543827]">Format Data (1 baris = 1 akun)</label>
+                  <span className="text-[10px] text-[#9e6d42] font-mono">email|password|catatan</span>
+                </div>
+                <textarea
+                  rows={6}
+                  placeholder={`user1@gmail.com|rahasia123|Lisensi Pro Lifetime\nuser2@gmail.com|sandi456|Lisensi Pro Lifetime`}
+                  value={bulkRawText}
+                  onChange={(e) => setBulkRawText(e.target.value)}
+                  className="w-full font-mono bg-white border border-[#ebdccb] rounded-2xl p-3 text-[#543827] focus:outline-none leading-relaxed text-xs"
+                />
+              </div>
+
+              {/* Preview Box */}
+              <div className="bg-[#f5efe6] p-4 rounded-2xl border border-[#ebdccb] space-y-2">
+                <div className="flex items-center justify-between font-bold text-[#543827]">
+                  <span>Hasil Parsing Data</span>
+                  <span className="bg-[#543827] text-[#fcfaf7] px-2.5 py-0.5 rounded-full text-[10px]">
+                    {parsedBulkAccounts.length} Data Valid
+                  </span>
+                </div>
+                <div className="max-h-36 overflow-y-auto space-y-1.5 font-mono text-[11px] text-[#7e5434]">
+                  {parsedBulkAccounts.length === 0 ? (
+                    <p className="text-[#9e6d42] italic">Belum ada data valid yang terdeteksi...</p>
+                  ) : (
+                    parsedBulkAccounts.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-white p-2 rounded-lg border border-[#ebdccb] flex items-center justify-between gap-2"
+                      >
+                        <span className="truncate">
+                          <b>#{idx + 1}</b> {item.email} | {item.password}
+                        </span>
+                        <span className="text-[#9e6d42] shrink-0">[{item.catatan}]</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-[#ebdccb] flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsBulkStockModalOpen(false)}
+                  className="bg-[#ebdccb] hover:bg-[#dec4a6] text-[#543827] font-bold px-5 py-2.5 rounded-xl transition-colors cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExecuteBulkStock}
+                  disabled={isSubmittingBulkStock}
+                  className="bg-[#543827] hover:bg-[#67442d] text-[#fcfaf7] font-bold px-6 py-2.5 rounded-xl transition-colors shadow-md flex items-center gap-1.5 cursor-pointer"
+                >
+                  {isSubmittingBulkStock ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                  <span>Tambahkan Stok Sekarang</span>
+                </button>
               </div>
             </div>
           </div>
-        )}
-      </main>
+        </div>
+      )}
     </div>
   );
 }
