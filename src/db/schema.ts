@@ -55,6 +55,7 @@ export const orders = sqliteTable('orders', {
   customerEmail: text('customer_email'),
   paymentMethod: text('payment_method').notNull().default('qris'),
   paymentNumber: text('payment_number'),
+  txnId: text('txn_id'),
   qrString: text('qr_string'),
   status: text('status').notNull().default('pending'), // 'pending' | 'completed' | 'expired' | 'canceled'
   accountDelivered: text('account_delivered'),

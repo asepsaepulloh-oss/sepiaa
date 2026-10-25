@@ -22,14 +22,14 @@ export async function GET(
 
     let order: any = res.rows[0];
 
-    // Jika status masih pending, verifikasi ke Pakasir langsung
+    // Jika status masih pending, verifikasi ke Pakasir v2 langsung
     if (order.status === 'pending') {
       const detail = await getPakasirTransactionDetail({
-        orderId: order.order_id,
-        amount: Number(order.amount),
+        txnId: order.txn_id ? String(order.txn_id) : null,
+        orderId: String(order.order_id),
       });
 
-      if (detail && (detail.status === 'completed' || (detail as any).status === 'success')) {
+      if (detail && detail.status === 'completed') {
         await assignStockToOrder(order.order_id);
 
         const updated = await client.execute({

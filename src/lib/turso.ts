@@ -88,6 +88,7 @@ export async function ensureDbReady() {
         customer_email TEXT,
         payment_method TEXT NOT NULL DEFAULT 'qris',
         payment_number TEXT,
+        txn_id TEXT,
         qr_string TEXT,
         status TEXT NOT NULL DEFAULT 'pending',
         account_delivered TEXT,
@@ -104,6 +105,13 @@ export async function ensureDbReady() {
         expires_at INTEGER NOT NULL
       );
     `);
+
+    // Tambah kolom txn_id jika database lama belum memilikinya
+    try {
+      await client.execute('ALTER TABLE orders ADD COLUMN txn_id TEXT;');
+    } catch {
+      // Abaikan jika kolom sudah ada
+    }
 
     // 2. Cek apakah kategori sudah ada
     const existingCat = await client.execute('SELECT COUNT(*) as count FROM categories');

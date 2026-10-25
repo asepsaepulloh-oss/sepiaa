@@ -36,34 +36,31 @@ export async function POST(req: NextRequest) {
 
     const price = Number(item.price);
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const randSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const orderId = `SEP-${dateStr}-${randSuffix}`;
+    const randSuffix = Math.random().toString(36).substring(2, 7).toUpperCase();
+    // Gunakan format Order ID alphanumeric aman untuk URL Pakasir v2
+    const orderId = `SEP${dateStr}${randSuffix}`;
 
-    const host = req.headers.get('host') || 'localhost:3000';
-    const proto = host.includes('localhost') ? 'http' : 'https';
-    const redirectUrl = `${proto}://${host}/order/${orderId}`;
-
-    // Buat transaksi di Pakasir
+    // Buat transaksi di Pakasir API v2
     const payment = await createPakasirTransaction({
       method: 'qris',
       orderId,
       amount: price,
-      redirectUrl,
     });
 
     const now = Date.now();
     const fee = payment.fee || 0;
     const totalPayment = payment.total_payment || (price + fee);
     const expiredAt = payment.expired_at ? new Date(payment.expired_at).getTime() : now + 15 * 60 * 1000;
+    const txnId = payment.txn_id || null;
 
     // Simpan order di database
     await client.execute({
       sql: `INSERT INTO orders (
               id, order_id, product_id, variant_id, product_name, variant_name,
               amount, fee, total_payment, customer_name, customer_whatsapp,
-              customer_email, payment_method, payment_number, qr_string,
+              customer_email, payment_method, payment_number, txn_id, qr_string,
               status, expired_at, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`,
       args: [
         `ord-${Math.random().toString(36).substring(2, 9)}`,
         orderId,
@@ -78,7 +75,8 @@ export async function POST(req: NextRequest) {
         customerWhatsapp.trim(),
         customerEmail?.trim() || null,
         'qris',
-        payment.payment_number || null,
+        payment.payment_number || txnId || null,
+        txnId,
         payment.qr_string || null,
         expiredAt,
         now,

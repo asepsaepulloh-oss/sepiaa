@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ensureDbReady } from '@/lib/turso';
+import { client, ensureDbReady } from '@/lib/turso';
 import { assignStockToOrder } from '@/lib/stock';
+import { simulatePakasirPayment } from '@/lib/pakasir';
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,6 +11,20 @@ export async function POST(req: NextRequest) {
 
     if (!orderId) {
       return NextResponse.json({ error: 'Order ID wajib diisi' }, { status: 400 });
+    }
+
+    // Ambil order dari DB
+    const orderRes = await client.execute({
+      sql: 'SELECT * FROM orders WHERE order_id = ? LIMIT 1',
+      args: [orderId],
+    });
+
+    if (orderRes.rows.length > 0) {
+      const order = orderRes.rows[0];
+      const txnId = order.txn_id ? String(order.txn_id) : null;
+
+      // Panggil simulasi Pakasir v2 jika ada koneksi
+      await simulatePakasirPayment({ txnId, orderId }).catch(() => {});
     }
 
     const res = await assignStockToOrder(orderId);
