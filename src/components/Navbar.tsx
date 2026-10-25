@@ -98,7 +98,6 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Navigation Links */}
         <nav className="hidden md:flex items-center gap-8 font-semibold text-xs lg:text-sm text-[#67442d]">
           <a href="#katalog" className="hover:text-[#9e6d42] transition-colors">Katalog</a>
-          <a href="#bundel" className="hover:text-[#9e6d42] transition-colors">Bundel Berharga</a>
           <a href="#tentang" className="hover:text-[#9e6d42] transition-colors">Tentang Kami</a>
           <button
             onClick={onOpenTrack}
@@ -214,13 +213,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="py-2 px-3 rounded-lg hover:bg-[#ebdccb]"
             >
               Katalog Aplikasi
-            </a>
-            <a
-              href="#bundel"
-              onClick={() => setMobileMenuOpen(false)}
-              className="py-2 px-3 rounded-lg hover:bg-[#ebdccb]"
-            >
-              Bundel Berharga
             </a>
             <a
               href="#tentang"

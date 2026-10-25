@@ -274,12 +274,6 @@ export default function HomePage() {
                   <span>Jelajahi katalog</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </a>
-                <a
-                  href="#bundel"
-                  className="bg-[#ebdccb] hover:bg-[#dec4a6] text-[#543827] font-semibold px-6 py-3.5 rounded-2xl text-xs sm:text-sm transition-all border border-[#dec4a6] flex items-center gap-2 cursor-pointer"
-                >
-                  <span>Lihat bundel berharga</span>
-                </a>
               </div>
 
               {/* Stats Footer */}
@@ -519,49 +513,6 @@ export default function HomePage() {
             </div>
           )}
         </section>
-
-        {/* BUNDLE SECTION */}
-        <section id="bundel" className="bg-[#ebdccb]/40 border-y border-[#ebdccb] py-16 px-4 sm:px-6 lg:px-8 my-10">
-          <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-10">
-            <div className="space-y-4 max-w-xl">
-              <span className="bg-[#dec4a6] text-[#543827] text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                Hemat hingga 65%
-              </span>
-              <h2 className="text-3xl font-extrabold text-[#543827]">Bundel Koleksi Kreator Sepia</h2>
-              <p className="text-sm text-[#7e5434] leading-relaxed">
-                Dapatkan aplikasi produktivitas, hiburan, dan desain pilihan kami dalam satu bundel eksklusif. Lisensi terjamin untuk seluruh perangkat Anda.
-              </p>
-              <div className="flex items-center gap-4 text-xs font-semibold text-[#67442d]">
-                <span className="flex items-center gap-1.5">
-                  <Check className="w-4 h-4 text-[#9e6d42]" />
-                  <span>Update &amp; Garansi Penuh</span>
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <Check className="w-4 h-4 text-[#9e6d42]" />
-                  <span>Semua Platform</span>
-                </span>
-              </div>
-            </div>
-
-            <div className="bg-[#543827] text-[#fcfaf7] p-8 rounded-3xl shadow-xl w-full max-w-sm border border-[#67442d] text-center space-y-6">
-              <div>
-                <span className="text-xs uppercase tracking-widest text-[#cfa67c]">Harga Bundel Spesial</span>
-                <div className="flex items-center justify-center gap-3 mt-1">
-                  <span className="text-3xl font-extrabold text-white">Rp899.000</span>
-                  <span className="text-sm text-[#dec4a6] line-through">Rp2.450.000</span>
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  if (products[0]) handleBuyNow(products[0]);
-                }}
-                className="w-full bg-[#fcfaf7] hover:bg-white text-[#543827] font-bold py-3.5 rounded-2xl text-xs transition-colors shadow-md cursor-pointer"
-              >
-                Beli Bundel Sekarang
-              </button>
-            </div>
-          </div>
-        </section>
       </main>
 
       {/* FOOTER */}
@@ -583,7 +534,6 @@ export default function HomePage() {
             <h4 className="font-bold text-sm text-[#fcfaf7] mb-4">Navigasi</h4>
             <ul className="space-y-2 text-xs">
               <li><a href="#katalog" className="hover:text-white transition-colors">Katalog Aplikasi</a></li>
-              <li><a href="#bundel" className="hover:text-white transition-colors">Bundel Eksklusif</a></li>
               <li>
                 <button onClick={() => setIsTrackOpen(true)} className="hover:text-white transition-colors text-left">
                   Lacak Pesanan
