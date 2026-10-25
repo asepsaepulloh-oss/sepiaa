@@ -35,7 +35,16 @@ export async function GET(req: NextRequest) {
     );
     const activeStockCount = Number(stockCountRes.rows[0]?.count || 0);
 
-    // 2. Recent Orders (50 teratas)
+    // 2. Kategori
+    const catRes = await client.execute('SELECT * FROM categories ORDER BY sort_order ASC');
+    const categories = catRes.rows.map((r: any) => ({
+      id: String(r.id),
+      name: String(r.name),
+      slug: String(r.slug),
+      icon: String(r.icon),
+    }));
+
+    // 3. Recent Orders (50 teratas)
     const ordersRes = await client.execute(
       'SELECT * FROM orders ORDER BY created_at DESC LIMIT 50'
     );
@@ -56,7 +65,7 @@ export async function GET(req: NextRequest) {
       completedAt: r.completed_at ? Number(r.completed_at) : null,
     }));
 
-    // 3. Products & Variants with individual stock count
+    // 4. Products & Variants with individual stock count
     const variantsRes = await client.execute(`
       SELECT v.*, p.name as product_name,
         (SELECT COUNT(*) FROM product_stocks s WHERE s.variant_id = v.id AND s.is_sold = 0) as stock_count
@@ -75,6 +84,20 @@ export async function GET(req: NextRequest) {
       stockCount: Number(r.stock_count || 0),
     }));
 
+    // 5. Raw Products list
+    const prodRes = await client.execute(
+      'SELECT * FROM products ORDER BY created_at DESC'
+    );
+    const products = prodRes.rows.map((r: any) => ({
+      id: String(r.id),
+      name: String(r.name),
+      categoryId: String(r.category_id),
+      imageUrl: String(r.image_url),
+      badge: r.badge ? String(r.badge) : null,
+      description: String(r.description),
+      isActive: Number(r.is_active),
+    }));
+
     return NextResponse.json({
       success: true,
       metrics: {
@@ -83,8 +106,10 @@ export async function GET(req: NextRequest) {
         paidOrders,
         activeStockCount,
       },
+      categories,
       orders,
       variants,
+      products,
     });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
