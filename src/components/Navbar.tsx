@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, Clock, KeyRound, Menu, X, User, ShoppingBag } from 'lucide-react';
+import { Search, Clock, KeyRound, Menu, X, User, ShoppingBag, LogOut } from 'lucide-react';
 import { BearHead, BearPaw } from './BearIcon';
 
 interface NavbarProps {
@@ -31,6 +31,8 @@ export const Navbar: React.FC<NavbarProps> = ({
         const data = await res.json();
         if (data.authenticated) {
           setIsAdminLoggedIn(true);
+        } else {
+          setIsAdminLoggedIn(false);
         }
       } catch {
         setIsAdminLoggedIn(false);
@@ -54,6 +56,22 @@ export const Navbar: React.FC<NavbarProps> = ({
     checkAdminAuth();
     checkUserAuth();
   }, []);
+
+  const handleAdminLogout = async () => {
+    try {
+      await fetch('/api/admin/logout', { method: 'POST' });
+      setIsAdminLoggedIn(false);
+      window.location.reload();
+    } catch {}
+  };
+
+  const handleUserLogout = async () => {
+    try {
+      await fetch('/api/user/logout', { method: 'POST' });
+      setUserProfile(null);
+      window.location.reload();
+    } catch {}
+  };
 
   return (
     <header className="sticky top-0 z-40 bg-[#f7f3ed] border-b border-[#ebdccb]">
@@ -104,16 +122,46 @@ export const Navbar: React.FC<NavbarProps> = ({
             <Search className="w-3.5 h-3.5 absolute left-3.5 top-2.5 text-[#9e6d42] pointer-events-none" />
           </div>
 
-          {/* User Button */}
-          {userProfile ? (
-            <Link
-              href="/dashboard"
-              className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold bg-[#f5efe6] hover:bg-[#ebdccb] text-[#543827] border border-[#dec4a6] transition-colors"
-            >
-              <User className="w-3.5 h-3.5 text-[#7e5434]" />
-              <span>{userProfile.name.split(' ')[0]}</span>
-            </Link>
+          {/* User / Admin Authentication State */}
+          {isAdminLoggedIn ? (
+            /* Admin Sedang Login: Tampilkan Tombol Panel Admin & Keluar, HAPUS tombol Masuk */
+            <div className="hidden sm:flex items-center gap-1.5">
+              <Link
+                href="/admin"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold bg-[#dec4a6] hover:bg-[#cfa67c] text-[#543827] border border-[#b88654] transition-colors shadow-sm"
+                title="Buka Dashboard Admin"
+              >
+                <KeyRound className="w-3.5 h-3.5 text-[#7e5434]" />
+                <span>Panel Admin</span>
+              </Link>
+              <button
+                onClick={handleAdminLogout}
+                className="p-2 rounded-full bg-[#f5efe6] hover:bg-[#ebdccb] text-rose-700 transition-colors cursor-pointer"
+                title="Keluar Admin"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : userProfile ? (
+            /* Customer Sedang Login: Tampilkan Akun Saya & Keluar, HAPUS tombol Masuk */
+            <div className="hidden sm:flex items-center gap-1.5">
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold bg-[#f5efe6] hover:bg-[#ebdccb] text-[#543827] border border-[#dec4a6] transition-colors"
+              >
+                <User className="w-3.5 h-3.5 text-[#7e5434]" />
+                <span>Akun Saya ({userProfile.name.split(' ')[0]})</span>
+              </Link>
+              <button
+                onClick={handleUserLogout}
+                className="p-2 rounded-full bg-[#f5efe6] hover:bg-[#ebdccb] text-rose-700 transition-colors cursor-pointer"
+                title="Keluar Member"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
           ) : (
+            /* Belum Login Sama Sekali: Tampilkan tombol Masuk */
             <Link
               href="/login"
               className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold bg-[#f5efe6] hover:bg-[#ebdccb] text-[#67442d] border border-[#dec4a6] transition-colors"
@@ -134,18 +182,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               {cartCount}
             </span>
           </button>
-
-          {/* Admin Panel Button (HANYA tampil jika admin sudah login) */}
-          {isAdminLoggedIn && (
-            <Link
-              href="/admin"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold bg-[#dec4a6] hover:bg-[#cfa67c] text-[#543827] border border-[#b88654] transition-colors"
-              title="Dashboard Admin"
-            >
-              <KeyRound className="w-3.5 h-3.5 text-[#7e5434]" />
-              <span className="hidden lg:inline">Admin</span>
-            </Link>
-          )}
 
           {/* Mobile menu button */}
           <button
@@ -205,29 +241,46 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           </div>
 
-          <div className="pt-2 border-t border-[#ebdccb] flex gap-2">
-            {userProfile ? (
-              <Link
-                href="/dashboard"
-                className="flex-1 text-center py-2.5 rounded-full text-xs font-bold bg-[#543827] text-white"
-              >
-                Akun Saya ({userProfile.name})
-              </Link>
+          <div className="pt-2 border-t border-[#ebdccb]">
+            {isAdminLoggedIn ? (
+              <div className="flex gap-2">
+                <Link
+                  href="/admin"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex-1 text-center py-2.5 rounded-full text-xs font-bold bg-[#dec4a6] text-[#543827] border border-[#b88654]"
+                >
+                  Panel Admin
+                </Link>
+                <button
+                  onClick={handleAdminLogout}
+                  className="px-4 py-2.5 rounded-full text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200"
+                >
+                  Keluar
+                </button>
+              </div>
+            ) : userProfile ? (
+              <div className="flex gap-2">
+                <Link
+                  href="/dashboard"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex-1 text-center py-2.5 rounded-full text-xs font-bold bg-[#543827] text-white"
+                >
+                  Akun Saya ({userProfile.name.split(' ')[0]})
+                </Link>
+                <button
+                  onClick={handleUserLogout}
+                  className="px-4 py-2.5 rounded-full text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200"
+                >
+                  Keluar
+                </button>
+              </div>
             ) : (
               <Link
                 href="/login"
-                className="flex-1 text-center py-2.5 rounded-full text-xs font-semibold bg-[#f5efe6] text-[#543827] border border-[#dec4a6]"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block w-full text-center py-2.5 rounded-full text-xs font-semibold bg-[#f5efe6] text-[#543827] border border-[#dec4a6]"
               >
                 Masuk / Daftar
-              </Link>
-            )}
-
-            {isAdminLoggedIn && (
-              <Link
-                href="/admin"
-                className="px-4 py-2.5 rounded-full text-xs font-bold bg-[#dec4a6] text-[#543827] border border-[#b88654]"
-              >
-                Admin
               </Link>
             )}
           </div>
