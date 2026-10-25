@@ -3,6 +3,7 @@
 import React, { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import QRCode from 'qrcode';
+import { BearHead, BearPaw } from '@/components/BearIcon';
 import {
   CheckCircle2,
   Clock,
@@ -10,13 +11,11 @@ import {
   Copy,
   Check,
   RefreshCw,
-  ShoppingBag,
   ArrowLeft,
   Download,
   ShieldCheck,
   Zap,
   Loader2,
-  QrCode,
   ExternalLink,
 } from 'lucide-react';
 
@@ -51,7 +50,6 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
   const [isSimulating, setIsSimulating] = useState(false);
   const [timeLeft, setTimeLeft] = useState<string>('--:--');
 
-  // Fetch status pesanan
   const fetchOrder = async (showSpinner = false) => {
     if (showSpinner) setIsRefreshing(true);
     try {
@@ -61,7 +59,6 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
         setOrder(data.order);
         setError(null);
 
-        // Generate QR Code data URL jika status masih pending
         if (data.order.qrString && !qrDataUrl) {
           QRCode.toDataURL(data.order.qrString, {
             width: 320,
@@ -83,12 +80,10 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
     }
   };
 
-  // Initial load
   useEffect(() => {
     fetchOrder();
   }, [orderId]);
 
-  // Polling otomatis setiap 3 detik jika status masih pending
   useEffect(() => {
     if (!order || order.status !== 'pending') return;
 
@@ -99,7 +94,6 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
     return () => clearInterval(interval);
   }, [order?.status]);
 
-  // Hitung mundur waktu expired
   useEffect(() => {
     if (!order?.expiredAt || order.status !== 'pending') return;
 
@@ -158,29 +152,29 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#09090b] flex flex-col items-center justify-center p-4 text-zinc-400 gap-3">
-        <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
-        <p className="text-sm font-medium">Memuat detail tagihan...</p>
+      <div className="min-h-screen bg-[#120d0a] flex flex-col items-center justify-center p-4 text-[#bcaaa0] gap-3">
+        <Loader2 className="w-8 h-8 animate-spin text-[#e59a44]" />
+        <p className="text-sm font-medium">Memuat detail tagihan Sepia Bear...</p>
       </div>
     );
   }
 
   if (error || !order) {
     return (
-      <div className="min-h-screen bg-[#09090b] flex flex-col items-center justify-center p-4 text-center space-y-4">
+      <div className="min-h-screen bg-[#120d0a] flex flex-col items-center justify-center p-4 text-center space-y-4">
         <div className="p-4 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-400">
           <AlertTriangle className="w-8 h-8" />
         </div>
         <h1 className="text-xl font-bold text-white">Pesanan Tidak Ditemukan</h1>
-        <p className="text-xs text-zinc-400 max-w-sm">
+        <p className="text-xs text-[#bcaaa0] max-w-sm">
           {error || 'Pastikan nomor invoice yang Anda buka sudah benar.'}
         </p>
         <Link
           href="/"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-amber-500 text-zinc-950 hover:bg-amber-600 transition-colors"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-[#c86d34] text-white hover:bg-[#d97736] transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Kembali ke Beranda</span>
+          <span>Kembali ke Toko</span>
         </Link>
       </div>
     );
@@ -190,17 +184,17 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
   const isExpired = order.status === 'expired' || order.status === 'canceled';
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-[#f4f4f5] flex flex-col">
+    <div className="min-h-screen bg-[#120d0a] text-[#fbf6f0] flex flex-col">
       {/* Top Header */}
-      <header className="border-b border-[#23232e] bg-[#0d0d12]/90 backdrop-blur-md sticky top-0 z-30">
+      <header className="border-b border-[#31241b] bg-[#17100b]/92 backdrop-blur-md sticky top-0 z-30">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-xs font-semibold">
+          <Link href="/" className="flex items-center gap-2 text-[#bcaaa0] hover:text-white transition-colors text-xs font-semibold">
             <ArrowLeft className="w-4 h-4" />
             <span>Kembali ke Toko</span>
           </Link>
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-            <span className="font-mono text-xs text-zinc-300 font-bold">{order.orderId}</span>
+            <BearHead className="w-4 h-4 text-[#e59a44]" />
+            <span className="font-mono text-xs text-[#f0e6dc] font-bold">{order.orderId}</span>
           </div>
         </div>
       </header>
@@ -231,14 +225,14 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
             </div>
           </div>
         ) : (
-          <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="p-4 sm:p-5 rounded-2xl bg-[#261911] border border-[#483323] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0">
-                <Clock className="w-5 h-5 text-amber-400" />
+              <div className="w-10 h-10 rounded-xl bg-[#c86d34]/25 flex items-center justify-center shrink-0">
+                <Clock className="w-5 h-5 text-[#e59a44]" />
               </div>
               <div>
                 <h1 className="text-sm sm:text-base font-bold text-white">Menunggu Pembayaran QRIS</h1>
-                <p className="text-xs text-zinc-400">
+                <p className="text-xs text-[#bcaaa0]">
                   Sistem mengecek status otomatis. Akun langsung tampil setelah Anda membayar.
                 </p>
               </div>
@@ -246,16 +240,16 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
 
             <div className="flex items-center gap-3 self-end sm:self-auto">
               <div className="text-right">
-                <span className="text-[10px] text-zinc-500 block">Sisa Waktu</span>
-                <span className="font-mono text-base font-extrabold text-amber-400">{timeLeft}</span>
+                <span className="text-[10px] text-[#8a7266] block">Sisa Waktu</span>
+                <span className="font-mono text-base font-extrabold text-[#e59a44]">{timeLeft}</span>
               </div>
               <button
                 onClick={() => fetchOrder(true)}
                 disabled={isRefreshing}
-                className="p-2.5 rounded-xl bg-[#1c1c28] hover:bg-[#252535] text-zinc-300 hover:text-white border border-[#2d2d40] transition-colors cursor-pointer"
+                className="p-2.5 rounded-xl bg-[#1f1610] hover:bg-[#2d2017] text-[#e8dbce] hover:text-white border border-[#3d2c20] transition-colors cursor-pointer"
                 title="Cek Status Sekarang"
               >
-                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-amber-500' : ''}`} />
+                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-[#e59a44]' : ''}`} />
               </button>
             </div>
           </div>
@@ -266,10 +260,10 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
           <div className="md:col-span-7 space-y-6">
             {isCompleted ? (
               /* SUCCESS: Account Delivery Box */
-              <div className="rounded-2xl bg-[#111117] border border-[#272738] p-5 sm:p-6 space-y-4">
+              <div className="rounded-2xl bg-[#1a120c] border border-[#3b2a1e] p-5 sm:p-6 space-y-4 shadow-xl">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Zap className="w-5 h-5 text-amber-400" />
+                    <BearHead className="w-5 h-5 text-[#e59a44]" />
                     <h2 className="text-sm sm:text-base font-bold text-white">Data Akun Langganan Anda</h2>
                   </div>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
@@ -278,14 +272,14 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                 </div>
 
                 {/* Monospace Credentials Box */}
-                <div className="relative p-4 rounded-xl bg-[#171722] border border-[#2a2a3e] font-mono text-xs sm:text-sm text-zinc-200 select-all whitespace-pre-wrap break-all leading-relaxed">
+                <div className="relative p-4 rounded-xl bg-[#241911] border border-[#443022] font-mono text-xs sm:text-sm text-[#fbf6f0] select-all whitespace-pre-wrap break-all leading-relaxed">
                   {order.accountDelivered}
                 </div>
 
                 {/* Copy Button */}
                 <button
                   onClick={handleCopyAccount}
-                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-zinc-950 transition-all cursor-pointer shadow-md shadow-amber-500/20"
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm bg-gradient-to-r from-[#c86d34] to-[#a35222] hover:from-[#d97736] hover:to-[#b45d29] text-white transition-all cursor-pointer shadow-md shadow-amber-950/40"
                 >
                   {copied ? (
                     <>
@@ -301,42 +295,42 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                 </button>
 
                 {/* Guarantee Rules */}
-                <div className="p-3.5 rounded-xl bg-[#14141c] border border-[#242433] space-y-1.5 text-xs text-zinc-400">
-                  <p className="font-semibold text-zinc-300 flex items-center gap-1.5">
+                <div className="p-3.5 rounded-xl bg-[#20150e] border border-[#382619] space-y-1.5 text-xs text-[#bcaaa0]">
+                  <p className="font-semibold text-[#f0e6dc] flex items-center gap-1.5">
                     <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                    <span>Ketentuan Garansi Sepia Store:</span>
+                    <span>Ketentuan Garansi Sepia Bear:</span>
                   </p>
-                  <ul className="list-disc list-inside space-y-1 pl-1 text-[11px] text-zinc-400">
-                    <li>Dilarang mengubah email, password, atau paket akun sharing.</li>
-                    <li>Gunakan profil sesuai nomor yang ditentukan.</li>
+                  <ul className="list-disc list-inside space-y-1 pl-1 text-[11px] text-[#bcaaa0]">
+                    <li>Dilarang mengubah email, password, atau profil paket akun sharing.</li>
+                    <li>Gunakan profil sesuai nomor/PIN yang ditentukan.</li>
                     <li>Garansi penggantian akun baru jika terkendala selama masa aktif.</li>
                   </ul>
                 </div>
               </div>
             ) : !isExpired ? (
               /* PENDING: QRIS Box */
-              <div className="rounded-2xl bg-[#111117] border border-[#272738] p-5 sm:p-6 text-center space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-[#20202c]">
+              <div className="rounded-2xl bg-[#1a120c] border border-[#3b2a1e] p-5 sm:p-6 text-center space-y-4 shadow-xl">
+                <div className="flex items-center justify-between pb-3 border-b border-[#2d2017]">
                   <div className="text-left">
-                    <p className="text-xs text-zinc-400">Metode Pembayaran</p>
+                    <p className="text-xs text-[#bcaaa0]">Metode Pembayaran</p>
                     <p className="text-sm font-bold text-white">QRIS Nasional (Pakasir)</p>
                   </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#c86d34]/25 text-[#f0b27a] border border-[#c86d34]/40">
                     SCAN BEBAS BIAYA
                   </span>
                 </div>
 
                 {/* QR Code Canvas / Image */}
-                <div className="flex flex-col items-center justify-center p-4 bg-white rounded-2xl max-w-xs mx-auto shadow-xl">
+                <div className="flex flex-col items-center justify-center p-4 bg-white rounded-2xl max-w-xs mx-auto shadow-2xl border-4 border-[#332216]">
                   {qrDataUrl ? (
                     <img src={qrDataUrl} alt="QRIS Pakasir" className="w-56 h-56 object-contain" />
                   ) : (
                     <div className="w-56 h-56 flex items-center justify-center text-zinc-600">
-                      <Loader2 className="w-8 h-8 animate-spin" />
+                      <Loader2 className="w-8 h-8 animate-spin text-[#c86d34]" />
                     </div>
                   )}
-                  <p className="text-[11px] font-bold text-zinc-800 mt-2 tracking-wider">
-                    SEPIA STORE &bull; QRIS
+                  <p className="text-[11px] font-extrabold text-[#291c13] mt-2 tracking-wider">
+                    SEPIA BEAR &bull; QRIS
                   </p>
                 </div>
 
@@ -344,7 +338,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                   <a
                     href={qrDataUrl}
                     download={`QRIS-${order.orderId}.png`}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#181822] hover:bg-[#232332] text-zinc-300 border border-[#29293a] transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#241911] hover:bg-[#312217] text-[#e8dbce] border border-[#3d2b1f] transition-colors"
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>Download Gambar QR</span>
@@ -352,8 +346,8 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                 )}
 
                 {/* Cara Bayar */}
-                <div className="text-left p-3.5 rounded-xl bg-[#15151e] border border-[#232330] space-y-2 text-xs text-zinc-400">
-                  <p className="font-semibold text-zinc-200">Cara Pembayaran:</p>
+                <div className="text-left p-3.5 rounded-xl bg-[#20150e] border border-[#382619] space-y-2 text-xs text-[#bcaaa0]">
+                  <p className="font-semibold text-[#f0e6dc]">Cara Pembayaran:</p>
                   <ol className="list-decimal list-inside space-y-1 text-[11px]">
                     <li>Buka aplikasi m-Banking (BCA, BRI, Mandiri, BNI) atau E-Wallet (Dana, GoPay, OVO, ShopeePay).</li>
                     <li>Pilih menu <strong>Scan QRIS</strong> dan arahkan kamera ke barcode di atas.</li>
@@ -362,8 +356,8 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                   </ol>
                 </div>
 
-                {/* Sandbox Simulation Button (Untuk testing instan) */}
-                <div className="pt-2 border-t border-[#20202c]">
+                {/* Sandbox Simulation Button */}
+                <div className="pt-2 border-t border-[#2d2017]">
                   <button
                     onClick={handleSimulatePayment}
                     disabled={isSimulating}
@@ -376,17 +370,17 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                     )}
                     <span>Simulasi Bayar Sekarang (Sandbox Mode)</span>
                   </button>
-                  <p className="text-[10px] text-zinc-500 mt-1">
+                  <p className="text-[10px] text-[#8a7266] mt-1">
                     Tombol pengujian: langsung menyelesaikan pembayaran &amp; mengirim akun tanpa scan.
                   </p>
                 </div>
               </div>
             ) : (
-              <div className="rounded-2xl bg-[#111117] border border-[#272738] p-6 text-center space-y-3">
-                <p className="text-xs text-zinc-400">Silakan buat pesanan baru untuk mendapatkan QRIS yang masih aktif.</p>
+              <div className="rounded-2xl bg-[#1a120c] border border-[#3b2a1e] p-6 text-center space-y-3">
+                <p className="text-xs text-[#bcaaa0]">Silakan buat pesanan baru untuk mendapatkan QRIS yang masih aktif.</p>
                 <Link
                   href="/"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 text-zinc-950 hover:bg-amber-600 transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-[#c86d34] text-white hover:bg-[#d97736] transition-colors"
                 >
                   Pesan Ulang di Beranda
                 </Link>
@@ -396,48 +390,48 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
 
           {/* Right Column: Order Summary */}
           <div className="md:col-span-5 space-y-5">
-            <div className="rounded-2xl bg-[#111117] border border-[#272738] p-5 space-y-4">
-              <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider">
+            <div className="rounded-2xl bg-[#1a120c] border border-[#3b2a1e] p-5 space-y-4 shadow-xl">
+              <h3 className="text-xs font-bold text-[#bcaaa0] uppercase tracking-wider">
                 Ringkasan Tagihan
               </h3>
 
-              <div className="space-y-3 pb-4 border-b border-[#20202c] text-xs">
+              <div className="space-y-3 pb-4 border-b border-[#2d2017] text-xs">
                 <div>
-                  <span className="text-zinc-500 text-[11px] block">Aplikasi:</span>
+                  <span className="text-[#8a7266] text-[11px] block">Aplikasi:</span>
                   <span className="font-bold text-white text-sm">{order.productName}</span>
                 </div>
                 <div>
-                  <span className="text-zinc-500 text-[11px] block">Varian Paket:</span>
-                  <span className="font-semibold text-amber-400">{order.variantName}</span>
+                  <span className="text-[#8a7266] text-[11px] block">Varian Paket:</span>
+                  <span className="font-semibold text-[#e59a44]">{order.variantName}</span>
                 </div>
                 <div>
-                  <span className="text-zinc-500 text-[11px] block">Penerima WhatsApp:</span>
-                  <span className="font-mono text-zinc-300">{order.customerWhatsapp}</span>
+                  <span className="text-[#8a7266] text-[11px] block">Penerima WhatsApp:</span>
+                  <span className="font-mono text-[#e8dbce]">{order.customerWhatsapp}</span>
                 </div>
               </div>
 
               {/* Price Breakdown */}
               <div className="space-y-2 text-xs">
-                <div className="flex justify-between text-zinc-400">
+                <div className="flex justify-between text-[#bcaaa0]">
                   <span>Harga Paket</span>
                   <span>{formatRupiah(order.amount)}</span>
                 </div>
-                <div className="flex justify-between text-zinc-400">
+                <div className="flex justify-between text-[#bcaaa0]">
                   <span>Biaya Layanan QRIS</span>
                   <span>{formatRupiah(order.fee)}</span>
                 </div>
-                <div className="flex justify-between text-sm font-bold text-white pt-2 border-t border-[#20202c]">
+                <div className="flex justify-between text-sm font-bold text-white pt-2 border-t border-[#2d2017]">
                   <span>Total Tagihan</span>
-                  <span className="text-amber-400 text-base">{formatRupiah(order.totalPayment)}</span>
+                  <span className="text-[#e59a44] text-base">{formatRupiah(order.totalPayment)}</span>
                 </div>
               </div>
 
               <div className="pt-2">
                 <a
-                  href={`https://wa.me/6281234567890?text=Halo%20Admin%20Sepia%20Store,%20konfirmasi%20pesanan%20dengan%20ID%20${order.orderId}`}
+                  href={`https://wa.me/6281234567890?text=Halo%20Admin%20Sepia%20Bear,%20konfirmasi%20pesanan%20dengan%20ID%20${order.orderId}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-semibold bg-[#181822] hover:bg-[#232332] text-zinc-300 border border-[#272738] transition-colors"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-semibold bg-[#241911] hover:bg-[#312217] text-[#e8dbce] border border-[#3d2b1f] transition-colors"
                 >
                   <ExternalLink className="w-3.5 h-3.5 text-emerald-400" />
                   <span>Bantuan CS WhatsApp</span>

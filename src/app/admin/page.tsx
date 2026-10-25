@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { BearHead, BearPaw } from '@/components/BearIcon';
 import {
   KeyRound,
   DollarSign,
@@ -15,8 +16,6 @@ import {
   AlertCircle,
   Clock,
   Layers,
-  ChevronRight,
-  Eye,
   Copy,
   Check,
 } from 'lucide-react';
@@ -191,11 +190,10 @@ export default function AdminPage() {
     setTimeout(() => setCopiedOrderId(null), 2000);
   };
 
-  // State Loading Check
   if (isAuthenticated === null) {
     return (
-      <div className="min-h-screen bg-[#09090b] flex items-center justify-center text-zinc-400">
-        <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
+      <div className="min-h-screen bg-[#120d0a] flex items-center justify-center text-[#bcaaa0]">
+        <Loader2 className="w-8 h-8 animate-spin text-[#e59a44]" />
       </div>
     );
   }
@@ -203,38 +201,38 @@ export default function AdminPage() {
   // Not Authenticated -> Show Login Screen
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#09090b] flex flex-col items-center justify-center p-4">
-        <div className="w-full max-w-sm bg-[#111117] border border-[#272738] rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6">
+      <div className="min-h-screen bg-[#120d0a] flex flex-col items-center justify-center p-4">
+        <div className="w-full max-w-sm bg-[#1a120c] border border-[#3b2a1e] rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6">
           <div className="text-center space-y-2">
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-500">
-              <KeyRound className="w-6 h-6" />
+            <div className="w-14 h-14 rounded-2xl bg-[#c86d34]/20 border border-[#c86d34]/40 flex items-center justify-center mx-auto text-[#e59a44]">
+              <BearHead className="w-8 h-8 text-[#e59a44]" />
             </div>
-            <h1 className="text-lg font-bold text-white tracking-tight">Admin Sepia Store</h1>
-            <p className="text-xs text-zinc-400">Masuk untuk mengelola produk, pesanan, dan stok</p>
+            <h1 className="text-lg font-bold text-white tracking-tight">Admin Sepia Bear</h1>
+            <p className="text-xs text-[#bcaaa0]">Masuk untuk mengelola produk, pesanan, dan stok</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1.5">Username</label>
+              <label className="block text-xs font-semibold text-[#cfbeb5] mb-1.5">Username</label>
               <input
                 type="text"
                 placeholder="admin"
                 value={usernameInput}
                 onChange={(e) => setUsernameInput(e.target.value)}
                 required
-                className="w-full bg-[#161622] border border-[#272736] focus:border-amber-500 rounded-xl px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none"
+                className="w-full bg-[#221711] border border-[#3b2a1e] focus:border-[#c86d34] rounded-xl px-3.5 py-2.5 text-sm text-[#fbf6f0] placeholder-[#7d675b] focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1.5">Password</label>
+              <label className="block text-xs font-semibold text-[#cfbeb5] mb-1.5">Password</label>
               <input
                 type="password"
                 placeholder="••••••••"
                 value={passwordInput}
                 onChange={(e) => setPasswordInput(e.target.value)}
                 required
-                className="w-full bg-[#161622] border border-[#272736] focus:border-amber-500 rounded-xl px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none"
+                className="w-full bg-[#221711] border border-[#3b2a1e] focus:border-[#c86d34] rounded-xl px-3.5 py-2.5 text-sm text-[#fbf6f0] placeholder-[#7d675b] focus:outline-none"
               />
             </div>
 
@@ -248,7 +246,7 @@ export default function AdminPage() {
             <button
               type="submit"
               disabled={isLoggingIn}
-              className="w-full py-3 rounded-xl font-bold text-xs bg-amber-500 hover:bg-amber-600 text-zinc-950 transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-amber-500/20"
+              className="w-full py-3 rounded-xl font-bold text-xs bg-gradient-to-r from-[#c86d34] to-[#a35222] hover:from-[#d97736] hover:to-[#b45d29] text-white transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-amber-950/40"
             >
               {isLoggingIn ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
               <span>Masuk ke Dashboard</span>
@@ -256,7 +254,7 @@ export default function AdminPage() {
           </form>
 
           <div className="text-center">
-            <Link href="/" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
+            <Link href="/" className="text-xs text-[#8a7266] hover:text-[#bcaaa0] transition-colors">
               &larr; Kembali ke Toko
             </Link>
           </div>
@@ -267,19 +265,20 @@ export default function AdminPage() {
 
   // Logged-in Dashboard
   return (
-    <div className="min-h-screen bg-[#09090b] text-[#f4f4f5] flex flex-col">
+    <div className="min-h-screen bg-[#120d0a] text-[#fbf6f0] flex flex-col">
       {/* Top Navigation */}
-      <header className="border-b border-[#23232e] bg-[#0c0c11]/90 backdrop-blur-md sticky top-0 z-30">
+      <header className="border-b border-[#31241b] bg-[#17100b]/92 backdrop-blur-md sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/" className="text-xs font-bold text-zinc-400 hover:text-white flex items-center gap-1.5">
+            <Link href="/" className="text-xs font-bold text-[#bcaaa0] hover:text-white flex items-center gap-1.5">
               <ArrowLeft className="w-4 h-4" />
               <span>Lihat Toko</span>
             </Link>
-            <span className="text-zinc-700">|</span>
+            <span className="text-[#3b2a1e]">|</span>
             <div className="flex items-center gap-2">
-              <span className="font-extrabold text-sm text-white">SEPIA ADMIN</span>
-              <span className="text-[10px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded font-mono">
+              <BearHead className="w-5 h-5 text-[#e59a44]" />
+              <span className="font-extrabold text-sm text-white">SEPIA BEAR ADMIN</span>
+              <span className="text-[10px] bg-[#3a281c] text-[#e59a44] border border-[#6b472e] px-1.5 py-0.5 rounded font-mono">
                 TURSO LIVE
               </span>
             </div>
@@ -289,10 +288,10 @@ export default function AdminPage() {
             <button
               onClick={fetchDashboardData}
               disabled={isLoadingData}
-              className="p-2 rounded-xl bg-[#161622] hover:bg-[#20202e] text-zinc-300 border border-[#272738] transition-colors cursor-pointer"
+              className="p-2 rounded-xl bg-[#221812] hover:bg-[#2d2017] text-[#e8dbce] border border-[#3d2e23] transition-colors cursor-pointer"
               title="Refresh Data"
             >
-              <RefreshCw className={`w-4 h-4 ${isLoadingData ? 'animate-spin text-amber-500' : ''}`} />
+              <RefreshCw className={`w-4 h-4 ${isLoadingData ? 'animate-spin text-[#e59a44]' : ''}`} />
             </button>
 
             <button
@@ -311,29 +310,29 @@ export default function AdminPage() {
         {/* Metric Cards */}
         {metrics && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-5 rounded-2xl bg-[#111117] border border-[#242433] space-y-1">
-              <span className="text-xs font-medium text-zinc-400 flex items-center gap-1.5">
-                <DollarSign className="w-4 h-4 text-amber-500" />
+            <div className="p-5 rounded-2xl bg-[#1a120c] border border-[#35251a] space-y-1 shadow-lg">
+              <span className="text-xs font-medium text-[#bcaaa0] flex items-center gap-1.5">
+                <DollarSign className="w-4 h-4 text-[#e59a44]" />
                 <span>Total Omset Lunas</span>
               </span>
-              <p className="text-lg sm:text-2xl font-black text-amber-400">
+              <p className="text-lg sm:text-2xl font-black text-[#e59a44]">
                 {formatRupiah(metrics.totalRevenue)}
               </p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[#111117] border border-[#242433] space-y-1">
-              <span className="text-xs font-medium text-zinc-400 flex items-center gap-1.5">
+            <div className="p-5 rounded-2xl bg-[#1a120c] border border-[#35251a] space-y-1 shadow-lg">
+              <span className="text-xs font-medium text-[#bcaaa0] flex items-center gap-1.5">
                 <CheckCircle className="w-4 h-4 text-emerald-400" />
                 <span>Pesanan Selesai</span>
               </span>
               <p className="text-lg sm:text-2xl font-black text-white">
-                {metrics.paidOrders} <span className="text-xs font-normal text-zinc-500">transaksi</span>
+                {metrics.paidOrders} <span className="text-xs font-normal text-[#8a7266]">transaksi</span>
               </p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[#111117] border border-[#242433] space-y-1">
-              <span className="text-xs font-medium text-zinc-400 flex items-center gap-1.5">
-                <ShoppingBag className="w-4 h-4 text-blue-400" />
+            <div className="p-5 rounded-2xl bg-[#1a120c] border border-[#35251a] space-y-1 shadow-lg">
+              <span className="text-xs font-medium text-[#bcaaa0] flex items-center gap-1.5">
+                <ShoppingBag className="w-4 h-4 text-[#d97736]" />
                 <span>Total Pesanan Masuk</span>
               </span>
               <p className="text-lg sm:text-2xl font-black text-white">
@@ -341,26 +340,26 @@ export default function AdminPage() {
               </p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[#111117] border border-[#242433] space-y-1">
-              <span className="text-xs font-medium text-zinc-400 flex items-center gap-1.5">
+            <div className="p-5 rounded-2xl bg-[#1a120c] border border-[#35251a] space-y-1 shadow-lg">
+              <span className="text-xs font-medium text-[#bcaaa0] flex items-center gap-1.5">
                 <PackagePlus className="w-4 h-4 text-purple-400" />
                 <span>Sisa Stok Akun Aktif</span>
               </span>
               <p className="text-lg sm:text-2xl font-black text-emerald-400">
-                {metrics.activeStockCount} <span className="text-xs font-normal text-zinc-500">akun</span>
+                {metrics.activeStockCount} <span className="text-xs font-normal text-[#8a7266]">akun</span>
               </p>
             </div>
           </div>
         )}
 
         {/* Tab Selector */}
-        <div className="flex border-b border-[#23232f] gap-4">
+        <div className="flex border-b border-[#31241b] gap-4">
           <button
             onClick={() => setActiveTab('orders')}
             className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
               activeTab === 'orders'
-                ? 'border-amber-500 text-amber-400'
-                : 'border-transparent text-zinc-400 hover:text-zinc-200'
+                ? 'border-[#c86d34] text-[#e59a44]'
+                : 'border-transparent text-[#a69286] hover:text-white'
             }`}
           >
             <Clock className="w-4 h-4" />
@@ -371,8 +370,8 @@ export default function AdminPage() {
             onClick={() => setActiveTab('stock')}
             className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
               activeTab === 'stock'
-                ? 'border-amber-500 text-amber-400'
-                : 'border-transparent text-zinc-400 hover:text-zinc-200'
+                ? 'border-[#c86d34] text-[#e59a44]'
+                : 'border-transparent text-[#a69286] hover:text-white'
             }`}
           >
             <PackagePlus className="w-4 h-4" />
@@ -383,8 +382,8 @@ export default function AdminPage() {
             onClick={() => setActiveTab('variants')}
             className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
               activeTab === 'variants'
-                ? 'border-amber-500 text-amber-400'
-                : 'border-transparent text-zinc-400 hover:text-zinc-200'
+                ? 'border-[#c86d34] text-[#e59a44]'
+                : 'border-transparent text-[#a69286] hover:text-white'
             }`}
           >
             <Layers className="w-4 h-4" />
@@ -394,10 +393,10 @@ export default function AdminPage() {
 
         {/* TAB 1: ORDERS TABLE */}
         {activeTab === 'orders' && (
-          <div className="rounded-2xl bg-[#111117] border border-[#232330] overflow-hidden">
+          <div className="rounded-2xl bg-[#1a120c] border border-[#35251a] overflow-hidden shadow-lg">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-zinc-300">
-                <thead className="bg-[#171722] text-zinc-400 font-semibold uppercase tracking-wider text-[11px] border-b border-[#242433]">
+              <table className="w-full text-left text-xs text-[#dcd0c7]">
+                <thead className="bg-[#241810] text-[#a69286] font-semibold uppercase tracking-wider text-[11px] border-b border-[#35251a]">
                   <tr>
                     <th className="px-4 py-3">Order ID</th>
                     <th className="px-4 py-3">Aplikasi / Paket</th>
@@ -408,24 +407,24 @@ export default function AdminPage() {
                     <th className="px-4 py-3">Waktu</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#1e1e2b]">
+                <tbody className="divide-y divide-[#281b12]">
                   {orders.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-4 py-8 text-center text-zinc-500">
+                      <td colSpan={7} className="px-4 py-8 text-center text-[#7d675b]">
                         Belum ada riwayat pesanan.
                       </td>
                     </tr>
                   ) : (
                     orders.map((o) => (
-                      <tr key={o.id} className="hover:bg-[#151520] transition-colors">
-                        <td className="px-4 py-3 font-mono font-bold text-amber-400">
+                      <tr key={o.id} className="hover:bg-[#20150e] transition-colors">
+                        <td className="px-4 py-3 font-mono font-bold text-[#e59a44]">
                           <Link href={`/order/${o.orderId}`} target="_blank" className="hover:underline">
                             {o.orderId}
                           </Link>
                         </td>
                         <td className="px-4 py-3">
                           <p className="font-semibold text-white">{o.productName}</p>
-                          <p className="text-[11px] text-zinc-500">{o.variantName}</p>
+                          <p className="text-[11px] text-[#8a7266]">{o.variantName}</p>
                         </td>
                         <td className="px-4 py-3">
                           <p className="font-medium text-white">{o.customerName}</p>
@@ -447,7 +446,7 @@ export default function AdminPage() {
                               o.status === 'completed'
                                 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                                 : o.status === 'pending'
-                                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                                ? 'bg-[#c86d34]/20 text-[#f0b27a] border border-[#c86d34]/30'
                                 : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
                             }`}
                           >
@@ -457,12 +456,12 @@ export default function AdminPage() {
                         <td className="px-4 py-3 max-w-xs">
                           {o.accountDelivered ? (
                             <div className="flex items-center gap-2">
-                              <span className="font-mono text-[11px] truncate text-zinc-300">
+                              <span className="font-mono text-[11px] truncate text-[#dcd0c7]">
                                 {o.accountDelivered}
                               </span>
                               <button
                                 onClick={() => handleCopyText(o.accountDelivered!, o.orderId)}
-                                className="p-1 text-zinc-400 hover:text-white"
+                                className="p-1 text-[#8a7266] hover:text-white"
                                 title="Salin Akun"
                               >
                                 {copiedOrderId === o.orderId ? (
@@ -473,10 +472,10 @@ export default function AdminPage() {
                               </button>
                             </div>
                           ) : (
-                            <span className="text-zinc-600">-</span>
+                            <span className="text-[#5c4639]">-</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-zinc-500 text-[11px] whitespace-nowrap">
+                        <td className="px-4 py-3 text-[#7d675b] text-[11px] whitespace-nowrap">
                           {new Date(o.createdAt).toLocaleString('id-ID')}
                         </td>
                       </tr>
@@ -490,23 +489,26 @@ export default function AdminPage() {
 
         {/* TAB 2: BULK STOCK INJECTION */}
         {activeTab === 'stock' && (
-          <div className="max-w-2xl bg-[#111117] border border-[#232330] rounded-2xl p-6 space-y-6">
-            <div>
-              <h2 className="text-base font-bold text-white">Input Massal (Bulk) Stok Akun</h2>
-              <p className="text-xs text-zinc-400 mt-1">
-                Pilih varian paket, lalu paste kredensial akun di textarea (1 baris per akun). Setiap akun baru akan otomatis dikirimkan ke pembeli berikutnya.
-              </p>
+          <div className="max-w-2xl bg-[#1a120c] border border-[#35251a] rounded-2xl p-6 space-y-6 shadow-lg">
+            <div className="flex items-center gap-2">
+              <BearPaw className="w-5 h-5 text-[#e59a44]" />
+              <div>
+                <h2 className="text-base font-bold text-white">Input Massal (Bulk) Stok Akun</h2>
+                <p className="text-xs text-[#bcaaa0] mt-0.5">
+                  Pilih varian paket, lalu paste kredensial akun di textarea (1 baris per akun).
+                </p>
+              </div>
             </div>
 
             <form onSubmit={handleAddStock} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                <label className="block text-xs font-semibold text-[#cfbeb5] mb-1.5">
                   Pilih Produk &amp; Varian
                 </label>
                 <select
                   value={selectedVariantId}
                   onChange={(e) => setSelectedVariantId(e.target.value)}
-                  className="w-full bg-[#161622] border border-[#272738] focus:border-amber-500 rounded-xl px-3.5 py-2.5 text-sm text-zinc-200 focus:outline-none"
+                  className="w-full bg-[#241810] border border-[#3d2b1f] focus:border-[#c86d34] rounded-xl px-3.5 py-2.5 text-sm text-[#fbf6f0] focus:outline-none"
                 >
                   {variants.map((v) => (
                     <option key={v.id} value={v.id}>
@@ -517,7 +519,7 @@ export default function AdminPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                <label className="block text-xs font-semibold text-[#cfbeb5] mb-1.5">
                   Daftar Akun (1 Akun Per Baris)
                 </label>
                 <textarea
@@ -526,7 +528,7 @@ export default function AdminPage() {
                   value={rawAccounts}
                   onChange={(e) => setRawAccounts(e.target.value)}
                   required
-                  className="w-full bg-[#161622] border border-[#272738] focus:border-amber-500 rounded-xl p-3.5 text-xs font-mono text-zinc-200 placeholder-zinc-600 focus:outline-none leading-relaxed"
+                  className="w-full bg-[#241810] border border-[#3d2b1f] focus:border-[#c86d34] rounded-xl p-3.5 text-xs font-mono text-[#fbf6f0] placeholder-[#7d675b] focus:outline-none leading-relaxed"
                 />
               </div>
 
@@ -540,7 +542,7 @@ export default function AdminPage() {
               <button
                 type="submit"
                 disabled={isSubmittingStock}
-                className="w-full py-3 rounded-xl font-bold text-xs bg-amber-500 hover:bg-amber-600 text-zinc-950 transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-amber-500/20"
+                className="w-full py-3 rounded-xl font-bold text-xs bg-gradient-to-r from-[#c86d34] to-[#a35222] hover:from-[#d97736] hover:to-[#b45d29] text-white transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-amber-950/40"
               >
                 {isSubmittingStock ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                 <span>Simpan Stok Akun Sekarang</span>
@@ -551,10 +553,10 @@ export default function AdminPage() {
 
         {/* TAB 3: VARIANTS & STOCKS OVERVIEW */}
         {activeTab === 'variants' && (
-          <div className="rounded-2xl bg-[#111117] border border-[#232330] overflow-hidden">
+          <div className="rounded-2xl bg-[#1a120c] border border-[#35251a] overflow-hidden shadow-lg">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-zinc-300">
-                <thead className="bg-[#171722] text-zinc-400 font-semibold uppercase tracking-wider text-[11px] border-b border-[#242433]">
+              <table className="w-full text-left text-xs text-[#dcd0c7]">
+                <thead className="bg-[#241810] text-[#a69286] font-semibold uppercase tracking-wider text-[11px] border-b border-[#35251a]">
                   <tr>
                     <th className="px-4 py-3">Produk</th>
                     <th className="px-4 py-3">Varian Paket</th>
@@ -563,15 +565,15 @@ export default function AdminPage() {
                     <th className="px-4 py-3">Stok Belum Terjual</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#1e1e2b]">
+                <tbody className="divide-y divide-[#281b12]">
                   {variants.map((v) => (
-                    <tr key={v.id} className="hover:bg-[#151520] transition-colors">
+                    <tr key={v.id} className="hover:bg-[#20150e] transition-colors">
                       <td className="px-4 py-3 font-bold text-white">{v.productName}</td>
-                      <td className="px-4 py-3 text-zinc-300">{v.name}</td>
-                      <td className="px-4 py-3 font-semibold text-amber-400">
+                      <td className="px-4 py-3 text-[#dcd0c7]">{v.name}</td>
+                      <td className="px-4 py-3 font-semibold text-[#e59a44]">
                         {formatRupiah(v.price)}
                       </td>
-                      <td className="px-4 py-3 text-zinc-500 line-through">
+                      <td className="px-4 py-3 text-[#735e53] line-through">
                         {formatRupiah(v.originalPrice)}
                       </td>
                       <td className="px-4 py-3">

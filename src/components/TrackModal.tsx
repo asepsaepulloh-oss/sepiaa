@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Search, Clock, ArrowRight, AlertCircle } from 'lucide-react';
+import { X, Clock, ArrowRight, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { BearHead } from './BearIcon';
 
 interface TrackModalProps {
   isOpen: boolean;
@@ -28,24 +29,24 @@ export const TrackModal: React.FC<TrackModalProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in">
       <div
-        className="w-full max-w-md bg-[#111117] border border-[#272738] rounded-2xl p-6 shadow-2xl relative text-zinc-100"
+        className="w-full max-w-md bg-[#18110c] border border-[#382619] rounded-2xl p-6 shadow-2xl relative text-[#fbf6f0]"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-[#1c1c28] transition-colors"
+          className="absolute top-4 right-4 p-1.5 text-[#a89588] hover:text-white rounded-lg hover:bg-[#271a12] transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
 
         <div className="flex items-center gap-2.5 mb-2">
-          <Clock className="w-5 h-5 text-amber-500" />
-          <h2 className="text-base font-bold text-white">Lacak & Ambil Akun Anda</h2>
+          <BearHead className="w-5 h-5 text-[#e59a44]" />
+          <h2 className="text-base font-bold text-white">Lacak &amp; Ambil Akun Anda</h2>
         </div>
-        <p className="text-xs text-zinc-400 mb-5">
-          Masukkan nomor invoice (contoh: <code className="text-amber-400 font-mono">SEP-20261025-XXXX</code>) untuk melihat QRIS atau mengambil data akun yang sudah dibayar.
+        <p className="text-xs text-[#bcaaa0] mb-5">
+          Masukkan nomor invoice (contoh: <code className="text-[#e59a44] font-mono">SEP-20261025-XXXX</code>) untuk melihat QRIS atau mengambil data akun yang sudah dibayar.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -58,7 +59,7 @@ export const TrackModal: React.FC<TrackModalProps> = ({ isOpen, onClose }) => {
                 setOrderId(e.target.value);
                 setError(null);
               }}
-              className="w-full bg-[#161622] border border-[#2b2b3d] focus:border-amber-500 rounded-xl px-4 py-3 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none uppercase font-mono"
+              className="w-full bg-[#20150e] border border-[#3b2a1e] focus:border-[#c86d34] rounded-xl px-4 py-3 text-sm text-[#fbf6f0] placeholder-[#7d675b] focus:outline-none uppercase font-mono"
             />
           </div>
 
@@ -71,7 +72,7 @@ export const TrackModal: React.FC<TrackModalProps> = ({ isOpen, onClose }) => {
 
           <button
             type="submit"
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm bg-amber-500 hover:bg-amber-600 text-zinc-950 transition-colors cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-[#c86d34] to-[#a35222] hover:from-[#d97736] hover:to-[#b45d29] text-white transition-all cursor-pointer shadow-md shadow-amber-950/40"
           >
             <span>Buka Halaman Pesanan</span>
             <ArrowRight className="w-4 h-4" />
