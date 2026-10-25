@@ -51,7 +51,7 @@ export async function assignStockToOrder(orderId: string): Promise<{
         args: [orderId, now, stockId],
       });
 
-      // Update status order
+      // Update status order menjadi selesai
       await client.execute({
         sql: `UPDATE orders 
               SET status = 'completed', 
@@ -63,8 +63,8 @@ export async function assignStockToOrder(orderId: string): Promise<{
 
       return { success: true, accountData };
     } else {
-      // Jika stok habis saat order dibayar, update status order dan beri pesan antrian admin
-      const waitMessage = 'Stok instan saat ini sedang di-restock otomatis. Hubungi WhatsApp Admin untuk penyerahan akun prioritas.';
+      // Jika terjadi kasus ekstrem stok habis mendadak saat pembayaran masuk
+      const waitMessage = 'Stok instan saat ini sedang habis. Kredensial akun prioritas akan diserahkan manual oleh WhatsApp Admin.';
       await client.execute({
         sql: `UPDATE orders 
               SET status = 'completed', 

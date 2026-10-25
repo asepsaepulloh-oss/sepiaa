@@ -478,7 +478,13 @@ export default function HomePage() {
                       <span className="text-xs font-extrabold text-[#543827]">
                         {formatRupiah(prod.minPrice)}
                       </span>
-                      <span className="block text-[10px] text-[#9e6d42]">Garansi Resmi Full</span>
+                      <span className="block text-[10px]">
+                        {prod.totalStock > 0 ? (
+                          <span className="text-emerald-700 font-semibold">Stok: {prod.totalStock} Akun</span>
+                        ) : (
+                          <span className="text-rose-700 font-bold">Stok Habis</span>
+                        )}
+                      </span>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -489,11 +495,22 @@ export default function HomePage() {
                         Detail
                       </button>
                       <button
-                        onClick={() => handleBuyNow(prod)}
-                        className="bg-[#543827] hover:bg-[#67442d] text-[#fcfaf7] px-3.5 py-2 rounded-xl text-xs font-bold transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer"
+                        onClick={() => {
+                          if (prod.totalStock > 0) {
+                            handleBuyNow(prod);
+                          } else {
+                            handleOpenDetail(prod);
+                          }
+                        }}
+                        disabled={prod.totalStock <= 0}
+                        className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-colors shadow-sm flex items-center gap-1.5 ${
+                          prod.totalStock <= 0
+                            ? 'bg-zinc-200 text-zinc-500 border border-zinc-300 cursor-not-allowed shadow-none'
+                            : 'bg-[#543827] hover:bg-[#67442d] text-[#fcfaf7] cursor-pointer'
+                        }`}
                       >
                         <ShoppingBag className="w-3.5 h-3.5" />
-                        <span>Beli</span>
+                        <span>{prod.totalStock <= 0 ? 'Habis' : 'Beli'}</span>
                       </button>
                     </div>
                   </div>

@@ -67,7 +67,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   // Update varian dan pastikan form terisi otomatis jika modal dibuka
   useEffect(() => {
     if (product && product.variants.length > 0) {
-      setSelectedVariantId(initialVariantId || product.variants[0].id);
+      if (initialVariantId) {
+        setSelectedVariantId(initialVariantId);
+      } else {
+        // Otomatis pilih varian yang memiliki stok jika ada
+        const variantWithStock = product.variants.find((v) => v.stockCount > 0);
+        setSelectedVariantId(variantWithStock ? variantWithStock.id : product.variants[0].id);
+      }
       setErrorMessage(null);
     }
     if (currentUser) {
@@ -92,9 +98,16 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const selectedVariant =
     product.variants.find((v) => v.id === selectedVariantId) || product.variants[0];
 
+  const isOutOfStock = (selectedVariant?.stockCount || 0) <= 0;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+
+    if (isOutOfStock) {
+      setErrorMessage('Maaf, stok akun untuk paket ini sedang habis. Produk tidak dapat di-checkout.');
+      return;
+    }
 
     if (!selectedVariantId) {
       setErrorMessage('Silakan pilih salah satu varian paket langganan.');
@@ -228,14 +241,14 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                         {v.description && (
                           <p className="text-xs text-[#9e6d42] mt-0.5">{v.description}</p>
                         )}
-                        <div className="text-[11px] text-[#7e5434] mt-0.5">
+                        <div className="text-[11px] mt-0.5">
                           {v.stockCount > 0 ? (
                             <span className="text-emerald-700 font-semibold">
                               Tersedia: {v.stockCount} akun siap kirim
                             </span>
                           ) : (
-                            <span className="text-amber-800 font-semibold">
-                              Antrian Instan (Restock otomatis)
+                            <span className="text-rose-700 font-bold bg-rose-50 border border-rose-200 px-2 py-0.5 rounded text-[10px]">
+                              Stok Habis
                             </span>
                           )}
                         </div>
@@ -326,6 +339,14 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             </span>
           </div>
 
+          {/* Out of stock warning banner */}
+          {isOutOfStock && (
+            <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-700" />
+              <span>Maaf, stok akun untuk varian ini sedang habis. Silakan pilih varian lain yang masih memiliki stok.</span>
+            </div>
+          )}
+
           {/* Error message */}
           {errorMessage && (
             <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs">
@@ -338,10 +359,16 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           <div className="pt-2">
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl font-bold text-xs sm:text-sm bg-[#543827] hover:bg-[#67442d] text-[#fcfaf7] shadow-md transition-colors cursor-pointer"
+              disabled={isSubmitting || isOutOfStock}
+              className={`w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl font-bold text-xs sm:text-sm transition-colors ${
+                isOutOfStock
+                  ? 'bg-zinc-200 text-zinc-500 border border-zinc-300 cursor-not-allowed'
+                  : 'bg-[#543827] hover:bg-[#67442d] text-[#fcfaf7] shadow-md cursor-pointer'
+              }`}
             >
-              {isSubmitting ? (
+              {isOutOfStock ? (
+                <span>Stok Habis (Tidak Dapat Di-checkout)</span>
+              ) : isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
                   <span>Membuat Tagihan QRIS...</span>

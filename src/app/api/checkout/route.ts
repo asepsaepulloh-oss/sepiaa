@@ -39,6 +39,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Produk ini sedang tidak aktif' }, { status: 400 });
     }
 
+    // Validasi stok akun: Jika stok tidak ada / habis, batalkan checkout
+    const stockRes = await client.execute({
+      sql: 'SELECT COUNT(*) as count FROM product_stocks WHERE variant_id = ? AND is_sold = 0',
+      args: [variantId],
+    });
+
+    const stockCount = Number(stockRes.rows[0]?.count || 0);
+    if (stockCount <= 0) {
+      return NextResponse.json(
+        { error: 'Maaf, stok akun untuk paket ini sedang habis. Produk tidak dapat dibeli.' },
+        { status: 400 }
+      );
+    }
+
     const price = Number(item.price);
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const randSuffix = Math.random().toString(36).substring(2, 7).toUpperCase();

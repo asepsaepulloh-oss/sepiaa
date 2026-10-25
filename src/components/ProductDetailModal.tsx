@@ -52,8 +52,9 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   const [selectedVariant, setSelectedVariant] = React.useState<Variant>(defaultVariant);
 
   React.useEffect(() => {
-    if (product.variants.length > 0) {
-      setSelectedVariant(product.variants[0]);
+    if (product?.variants?.length > 0) {
+      const variantWithStock = product.variants.find((v: any) => v.stockCount > 0);
+      setSelectedVariant(variantWithStock || product.variants[0]);
     }
   }, [product]);
 
@@ -66,6 +67,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   };
 
   const platforms = ['Windows', 'Mac', 'Android', 'iOS', 'Web / TV'];
+  const isOutOfStock = (selectedVariant?.stockCount || 0) <= 0;
 
   return (
     <div className="fixed inset-0 z-50 bg-[#2d1c13]/60 flex items-center justify-center p-4 animate-in fade-in">
@@ -115,7 +117,14 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                   }`}
                 >
                   <div>
-                    <span className="text-xs font-bold block">{v.name}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold block">{v.name}</span>
+                      {v.stockCount <= 0 && (
+                        <span className="text-[10px] text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.2 rounded font-bold">
+                          Stok Habis
+                        </span>
+                      )}
+                    </div>
                     {v.description && <span className="text-[11px] text-[#9e6d42]">{v.description}</span>}
                   </div>
                   <span className="text-xs font-extrabold text-[#543827]">{formatRupiah(v.price)}</span>
@@ -153,23 +162,37 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => {
-                onAddToCart(product, selectedVariant);
-                onClose();
+                if (!isOutOfStock) {
+                  onAddToCart(product, selectedVariant);
+                  onClose();
+                }
               }}
-              className="bg-[#ebdccb] hover:bg-[#dec4a6] text-[#543827] font-bold p-3 rounded-2xl text-xs transition-colors cursor-pointer"
-              title="Tambah ke Keranjang"
+              disabled={isOutOfStock}
+              className={`p-3 rounded-2xl text-xs font-bold transition-colors ${
+                isOutOfStock
+                  ? 'bg-zinc-100 text-zinc-400 border border-zinc-200 cursor-not-allowed'
+                  : 'bg-[#ebdccb] hover:bg-[#dec4a6] text-[#543827] cursor-pointer'
+              }`}
+              title={isOutOfStock ? 'Stok Habis' : 'Tambah ke Keranjang'}
             >
               <ShoppingBag className="w-4 h-4" />
             </button>
             <button
               onClick={() => {
-                onBuyNow(product, selectedVariant);
-                onClose();
+                if (!isOutOfStock) {
+                  onBuyNow(product, selectedVariant);
+                  onClose();
+                }
               }}
-              className="bg-[#543827] hover:bg-[#67442d] text-[#fcfaf7] font-bold px-5 py-3 rounded-2xl text-xs transition-colors shadow-md flex items-center gap-2 cursor-pointer"
+              disabled={isOutOfStock}
+              className={`px-5 py-3 rounded-2xl text-xs font-bold transition-colors shadow-md flex items-center gap-2 ${
+                isOutOfStock
+                  ? 'bg-zinc-200 text-zinc-500 border border-zinc-300 cursor-not-allowed shadow-none'
+                  : 'bg-[#543827] hover:bg-[#67442d] text-[#fcfaf7] cursor-pointer'
+              }`}
             >
-              <span>Beli Sekarang</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <span>{isOutOfStock ? 'Stok Habis' : 'Beli Sekarang'}</span>
+              {!isOutOfStock && <ArrowRight className="w-3.5 h-3.5" />}
             </button>
           </div>
         </div>
