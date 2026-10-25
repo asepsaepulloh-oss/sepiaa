@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, Clock, KeyRound, Menu, X } from 'lucide-react';
+import { Search, Clock, KeyRound, Menu, X, User } from 'lucide-react';
 import { BearHead, BearPaw } from './BearIcon';
 
 interface NavbarProps {
@@ -18,8 +18,10 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [userProfile, setUserProfile] = useState<{ name: string } | null>(null);
 
   useEffect(() => {
+    // 1. Cek status login Admin
     async function checkAdminAuth() {
       try {
         const res = await fetch('/api/admin/check');
@@ -31,13 +33,30 @@ export const Navbar: React.FC<NavbarProps> = ({
         setIsAdminLoggedIn(false);
       }
     }
+
+    // 2. Cek status login User / Member
+    async function checkUserAuth() {
+      try {
+        const res = await fetch('/api/user/check');
+        const data = await res.json();
+        if (data.authenticated && data.user) {
+          setUserProfile(data.user);
+        } else {
+          setUserProfile(null);
+        }
+      } catch {
+        setUserProfile(null);
+      }
+    }
+
     checkAdminAuth();
+    checkUserAuth();
   }, []);
 
   return (
     <header className="sticky top-0 z-40 w-full bg-[#19120c] border-b border-[#3d291b]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-        {/* Brand Logo - Solid Warm Caramel Bear */}
+        {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-3 group">
           <div className="w-10 h-10 rounded-xl bg-[#c4622d] border border-[#e89a42]/40 flex items-center justify-center text-[#faf4ee]">
             <BearHead className="w-6 h-6 text-[#faf4ee]" />
@@ -77,6 +96,25 @@ export const Navbar: React.FC<NavbarProps> = ({
             <Clock className="w-4 h-4 text-[#e89a42]" />
             <span>Lacak Pesanan</span>
           </button>
+
+          {/* User Member Area Button */}
+          {userProfile ? (
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#c4622d] hover:bg-[#b05220] text-white transition-colors"
+            >
+              <User className="w-4 h-4" />
+              <span>Akun Saya ({userProfile.name.split(' ')[0]})</span>
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-[#261a12] hover:bg-[#302117] text-[#faf4ee] border border-[#442e1f] transition-colors"
+            >
+              <User className="w-4 h-4 text-[#baa496]" />
+              <span>Masuk / Member</span>
+            </Link>
+          )}
 
           {/* Tombol Panel Admin: HANYA tampil jika admin sudah login */}
           {isAdminLoggedIn && (
@@ -124,6 +162,22 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Clock className="w-4 h-4 text-[#e89a42]" />
               <span>Lacak Pesanan</span>
             </button>
+
+            {userProfile ? (
+              <Link
+                href="/dashboard"
+                className="flex items-center justify-center px-4 py-2.5 rounded-xl text-xs font-bold bg-[#c4622d] text-white"
+              >
+                Akun Saya
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                className="flex items-center justify-center px-4 py-2.5 rounded-xl text-xs font-semibold bg-[#261a12] text-[#faf4ee] border border-[#442e1f]"
+              >
+                Masuk
+              </Link>
+            )}
 
             {isAdminLoggedIn && (
               <Link

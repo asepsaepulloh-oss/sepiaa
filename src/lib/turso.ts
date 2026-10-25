@@ -106,9 +106,33 @@ export async function ensureDbReady() {
       );
     `);
 
-    // Tambah kolom txn_id jika database lama belum memilikinya
+    await client.execute(`
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        whatsapp TEXT NOT NULL UNIQUE,
+        email TEXT,
+        password TEXT NOT NULL,
+        created_at INTEGER NOT NULL
+      );
+    `);
+
+    await client.execute(`
+      CREATE TABLE IF NOT EXISTS user_sessions (
+        token TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        expires_at INTEGER NOT NULL
+      );
+    `);
+
+    // Tambah kolom ke orders jika database lama belum memilikinya
     try {
       await client.execute('ALTER TABLE orders ADD COLUMN txn_id TEXT;');
+    } catch {
+      // Abaikan jika kolom sudah ada
+    }
+    try {
+      await client.execute('ALTER TABLE orders ADD COLUMN user_id TEXT;');
     } catch {
       // Abaikan jika kolom sudah ada
     }

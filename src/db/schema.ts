@@ -43,6 +43,7 @@ export const productStocks = sqliteTable('product_stocks', {
 export const orders = sqliteTable('orders', {
   id: text('id').primaryKey(),
   orderId: text('order_id').notNull().unique(),
+  userId: text('user_id'),
   productId: text('product_id').notNull(),
   variantId: text('variant_id').notNull(),
   productName: text('product_name').notNull(),
@@ -62,6 +63,21 @@ export const orders = sqliteTable('orders', {
   expiredAt: integer('expired_at'),
   createdAt: integer('created_at').notNull(),
   completedAt: integer('completed_at'),
+});
+
+export const users = sqliteTable('users', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  whatsapp: text('whatsapp').notNull().unique(),
+  email: text('email'),
+  password: text('password').notNull(),
+  createdAt: integer('created_at').notNull(),
+});
+
+export const userSessions = sqliteTable('user_sessions', {
+  token: text('token').primaryKey(),
+  userId: text('user_id').notNull(),
+  expiresAt: integer('expires_at').notNull(),
 });
 
 export const adminSessions = sqliteTable('admin_sessions', {
