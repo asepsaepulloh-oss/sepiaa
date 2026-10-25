@@ -210,3 +210,40 @@ export async function simulatePakasirPayment(params: {
     return false;
   }
 }
+
+/**
+ * Batalkan transaksi di Pakasir API v2
+ * POST /api/v2/cancel-transaction/{slug}/{txn_id}
+ */
+export async function cancelPakasirTransaction(params: {
+  txnId?: string | null;
+  orderId: string;
+}): Promise<boolean> {
+  const { txnId, orderId } = params;
+
+  const settings = await getStoreSettings();
+  const project = settings.pakasir_project.trim().replace(/^\/+|\/+$/g, '');
+  const apiKey = settings.pakasir_api_key.trim();
+
+  if (!project || !apiKey || apiKey.includes('dummy') || apiKey.includes('rahasia')) {
+    return true;
+  }
+
+  const targetId = txnId || orderId;
+  if (!targetId) return false;
+
+  try {
+    const url = `${BASE_URL}/api/v2/cancel-transaction/${encodeURIComponent(project)}/${encodeURIComponent(targetId)}`;
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'X-Api-Key': apiKey,
+      },
+    });
+
+    return res.ok;
+  } catch {
+    return false;
+  }
+}

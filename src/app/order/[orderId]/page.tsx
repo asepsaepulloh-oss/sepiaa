@@ -17,6 +17,7 @@ import {
   Zap,
   Loader2,
   ExternalLink,
+  XCircle,
 } from 'lucide-react';
 
 interface OrderData {
@@ -50,6 +51,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
   const [copied, setCopied] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
+  const [isCanceling, setIsCanceling] = useState(false);
   const [timeLeft, setTimeLeft] = useState<string>('--:--');
 
   const fetchOrder = async (showSpinner = false) => {
@@ -144,6 +146,31 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
     }
   };
 
+  const handleCancelOrder = async () => {
+    if (!confirm('Apakah Anda yakin ingin membatalkan pesanan ini? Kode QRIS ini tidak akan dapat digunakan lagi.')) {
+      return;
+    }
+
+    setIsCanceling(true);
+    try {
+      const res = await fetch('/api/order/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchOrder(false);
+      } else {
+        alert(data.error || 'Gagal membatalkan pesanan.');
+      }
+    } catch (err: any) {
+      alert('Error: ' + err.message);
+    } finally {
+      setIsCanceling(false);
+    }
+  };
+
   const formatRupiah = (num: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -222,9 +249,13 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
           <div className="p-5 rounded-3xl bg-rose-50 border border-rose-200 flex items-center gap-4">
             <AlertTriangle className="w-7 h-7 text-rose-700 shrink-0" />
             <div>
-              <h1 className="text-base font-bold text-rose-950">Tagihan Kedaluwarsa</h1>
+              <h1 className="text-base font-bold text-rose-950">
+                {order.status === 'canceled' ? 'Pesanan Telah Dibatalkan' : 'Tagihan Kedaluwarsa'}
+              </h1>
               <p className="text-xs text-rose-800 mt-0.5">
-                Waktu pembayaran telah habis. Silakan lakukan checkout ulang di beranda toko.
+                {order.status === 'canceled'
+                  ? 'Pesanan ini telah dibatalkan atas permintaan Anda. Kode QRIS tidak lagi berlaku.'
+                  : 'Waktu pembayaran telah habis. Silakan lakukan checkout ulang di beranda toko.'}
               </p>
             </div>
           </div>
@@ -377,6 +408,25 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                     </button>
                   </div>
                 )}
+
+                {/* Tombol Batalkan Pesanan oleh Pembeli */}
+                <div className="pt-2 border-t border-[#ebdccb]">
+                  <button
+                    onClick={handleCancelOrder}
+                    disabled={isCanceling}
+                    className="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-2xl text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 transition-colors cursor-pointer"
+                  >
+                    {isCanceling ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <XCircle className="w-3.5 h-3.5" />
+                    )}
+                    <span>Batalkan Pesanan Ini</span>
+                  </button>
+                  <p className="text-[10px] text-[#9e6d42] mt-1">
+                    Ingin mengganti pesanan atau paket lain? Anda dapat membatalkan tagihan ini.
+                  </p>
+                </div>
               </div>
             ) : (
               <div className="rounded-3xl bg-[#fcfaf7] border border-[#ebdccb] p-6 text-center space-y-3">
