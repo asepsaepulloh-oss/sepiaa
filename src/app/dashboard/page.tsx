@@ -8,6 +8,7 @@ import {
   ArrowLeft,
   Loader2,
   AlertCircle,
+  AlertTriangle,
   Copy,
   Check,
   ShieldCheck,
@@ -17,7 +18,6 @@ import {
   LogOut,
   ExternalLink,
   RefreshCw,
-  Layers,
 } from 'lucide-react';
 
 interface UserData {
@@ -97,7 +97,6 @@ export default function UserDashboardPage() {
     }).format(num);
   };
 
-  // Hitung sisa hari garansi/masa aktif
   const calculateDaysLeft = (completedAt: number | null, durationDays: number) => {
     if (!completedAt) return 0;
     const expiry = completedAt + durationDays * 24 * 60 * 60 * 1000;
@@ -107,26 +106,26 @@ export default function UserDashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#19120c] flex flex-col items-center justify-center p-4 text-[#baa496] gap-3">
-        <Loader2 className="w-8 h-8 animate-spin text-[#e89a42]" />
-        <p className="text-sm font-medium">Memuat Dashboard Member...</p>
+      <div className="min-h-screen bg-[#f7f3ed] flex flex-col items-center justify-center p-4 text-[#7e5434] gap-3">
+        <Loader2 className="w-8 h-8 animate-spin text-[#543827]" />
+        <p className="text-sm font-semibold">Memuat Dashboard Member...</p>
       </div>
     );
   }
 
   if (error || !user) {
     return (
-      <div className="min-h-screen bg-[#19120c] flex flex-col items-center justify-center p-4 text-center space-y-4">
-        <div className="p-4 rounded-full bg-[#321715] border border-[#5c2825] text-rose-400">
-          <AlertCircle className="w-8 h-8" />
+      <div className="min-h-screen bg-[#f7f3ed] flex flex-col items-center justify-center p-4 text-center space-y-4">
+        <div className="p-4 rounded-full bg-rose-50 border border-rose-200 text-rose-700">
+          <AlertTriangle className="w-8 h-8" />
         </div>
-        <h1 className="text-xl font-bold text-white">Sesi Login Tidak Ditemukan</h1>
-        <p className="text-xs text-[#baa496] max-w-sm">
+        <h1 className="text-xl font-bold text-[#543827]">Sesi Login Tidak Ditemukan</h1>
+        <p className="text-xs text-[#7e5434] max-w-sm">
           {error || 'Silakan masuk terlebih dahulu untuk mengakses akun Anda.'}
         </p>
         <Link
           href="/login"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-[#c4622d] text-white hover:bg-[#b05220] transition-colors"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold bg-[#543827] text-white hover:bg-[#67442d] transition-colors"
         >
           Masuk ke Akun
         </Link>
@@ -137,33 +136,33 @@ export default function UserDashboardPage() {
   const completedOrders = orders.filter((o) => o.status === 'completed' && o.accountDelivered);
 
   return (
-    <div className="min-h-screen bg-[#19120c] text-[#faf4ee] flex flex-col">
+    <div className="min-h-screen bg-[#f7f3ed] text-[#3b281a] flex flex-col">
       {/* Top Header */}
-      <header className="border-b border-[#3d291b] bg-[#19120c] sticky top-0 z-30">
+      <header className="border-b border-[#ebdccb] bg-[#f7f3ed] sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/" className="text-xs font-bold text-[#baa496] hover:text-white flex items-center gap-1.5">
+            <Link href="/" className="text-xs font-bold text-[#7e5434] hover:text-[#543827] flex items-center gap-1.5">
               <ArrowLeft className="w-4 h-4" />
               <span>Belanja Lagi</span>
             </Link>
-            <span className="text-[#3d291b]">|</span>
+            <span className="text-[#ebdccb]">|</span>
             <div className="flex items-center gap-2">
-              <BearHead className="w-5 h-5 text-[#e89a42]" />
-              <span className="font-extrabold text-sm text-white">DASHBOARD MEMBER</span>
+              <BearHead className="w-5 h-5 text-[#7e5434]" />
+              <span className="font-extrabold text-sm text-[#543827]">DASHBOARD MEMBER</span>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             <button
               onClick={fetchDashboard}
-              className="p-2 rounded-xl bg-[#231810] hover:bg-[#2d2017] text-[#faf4ee] border border-[#3d291b] transition-colors cursor-pointer"
+              className="p-2 rounded-xl bg-[#f5efe6] hover:bg-[#ebdccb] text-[#543827] border border-[#dec4a6] transition-colors cursor-pointer"
               title="Refresh"
             >
-              <RefreshCw className="w-4 h-4 text-[#e89a42]" />
+              <RefreshCw className="w-4 h-4 text-[#7e5434]" />
             </button>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-[#321715] hover:bg-[#441f1c] text-rose-300 border border-[#5c2825] transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 transition-colors cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>Keluar</span>
@@ -175,52 +174,52 @@ export default function UserDashboardPage() {
       {/* Main Dashboard Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
         {/* User Greeting & Metrics */}
-        <section className="rounded-2xl bg-[#231810] border border-[#3d291b] p-6 space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#312015]">
+        <section className="rounded-3xl bg-[#fcfaf7] border border-[#ebdccb] p-6 space-y-6 card-shadow">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#ebdccb]">
             <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-xl bg-[#c4622d] border border-[#e89a42]/40 flex items-center justify-center text-[#faf4ee]">
-                <BearHead className="w-7 h-7 text-[#faf4ee]" />
+              <div className="w-12 h-12 rounded-2xl bg-[#543827] flex items-center justify-center text-[#fcfaf7] shadow-md">
+                <BearHead className="w-7 h-7 text-[#f5efe6]" />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-white">Halo, {user.name}</h1>
-                <p className="text-xs text-[#baa496]">
-                  WhatsApp: <span className="font-mono text-[#e89a42] font-semibold">{user.whatsapp}</span>
+                <h1 className="text-lg font-bold text-[#543827]">Halo, {user.name}</h1>
+                <p className="text-xs text-[#7e5434]">
+                  WhatsApp: <span className="font-mono text-[#543827] font-bold">{user.whatsapp}</span>
                   {user.email ? ` • ${user.email}` : ''}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-lg text-xs font-bold bg-[#1d3324] text-emerald-400 border border-emerald-500/40 flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span>Garansi Beruang Aktif</span>
+              <span className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-700" />
+                <span>Garansi Resmi Aktif</span>
               </span>
             </div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            <div className="p-4 rounded-xl bg-[#2a1d14] border border-[#3d291b] space-y-1">
-              <span className="text-xs text-[#baa496] flex items-center gap-1.5">
-                <Zap className="w-4 h-4 text-[#e89a42]" />
+            <div className="p-4 rounded-2xl bg-[#f5efe6] border border-[#ebdccb] space-y-1">
+              <span className="text-xs text-[#7e5434] flex items-center gap-1.5">
+                <Zap className="w-4 h-4 text-[#b88654]" />
                 <span>Akun Premium Aktif</span>
               </span>
-              <p className="text-2xl font-black text-white">{completedOrders.length}</p>
+              <p className="text-2xl font-black text-[#543827]">{completedOrders.length}</p>
             </div>
 
-            <div className="p-4 rounded-xl bg-[#2a1d14] border border-[#3d291b] space-y-1">
-              <span className="text-xs text-[#baa496] flex items-center gap-1.5">
-                <ShoppingBag className="w-4 h-4 text-[#c4622d]" />
+            <div className="p-4 rounded-2xl bg-[#f5efe6] border border-[#ebdccb] space-y-1">
+              <span className="text-xs text-[#7e5434] flex items-center gap-1.5">
+                <ShoppingBag className="w-4 h-4 text-[#7e5434]" />
                 <span>Total Transaksi</span>
               </span>
-              <p className="text-2xl font-black text-white">{orders.length}</p>
+              <p className="text-2xl font-black text-[#543827]">{orders.length}</p>
             </div>
 
-            <div className="p-4 rounded-xl bg-[#2a1d14] border border-[#3d291b] space-y-1 col-span-2 sm:col-span-1">
-              <span className="text-xs text-[#baa496] flex items-center gap-1.5">
-                <Clock className="w-4 h-4 text-emerald-400" />
+            <div className="p-4 rounded-2xl bg-[#f5efe6] border border-[#ebdccb] space-y-1 col-span-2 sm:col-span-1">
+              <span className="text-xs text-[#7e5434] flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-emerald-700" />
                 <span>Member Sejak</span>
               </span>
-              <p className="text-sm font-bold text-white mt-1">
+              <p className="text-sm font-bold text-[#543827] mt-1">
                 {new Date(user.createdAt).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}
               </p>
             </div>
@@ -228,13 +227,13 @@ export default function UserDashboardPage() {
         </section>
 
         {/* Tab Selector */}
-        <div className="flex border-b border-[#3d291b] gap-6">
+        <div className="flex border-b border-[#ebdccb] gap-6">
           <button
             onClick={() => setActiveTab('accounts')}
             className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
               activeTab === 'accounts'
-                ? 'border-[#c4622d] text-[#e89a42]'
-                : 'border-transparent text-[#baa496] hover:text-white'
+                ? 'border-[#543827] text-[#543827]'
+                : 'border-transparent text-[#9e6d42] hover:text-[#543827]'
             }`}
           >
             <Zap className="w-4 h-4" />
@@ -245,8 +244,8 @@ export default function UserDashboardPage() {
             onClick={() => setActiveTab('orders')}
             className={`pb-3 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
               activeTab === 'orders'
-                ? 'border-[#c4622d] text-[#e89a42]'
-                : 'border-transparent text-[#baa496] hover:text-white'
+                ? 'border-[#543827] text-[#543827]'
+                : 'border-transparent text-[#9e6d42] hover:text-[#543827]'
             }`}
           >
             <Clock className="w-4 h-4" />
@@ -254,19 +253,19 @@ export default function UserDashboardPage() {
           </button>
         </div>
 
-        {/* TAB 1: AKUN SAYA (DELIVERED SUBSCRIPTIONS) */}
+        {/* TAB 1: AKUN SAYA */}
         {activeTab === 'accounts' && (
           <div className="space-y-4">
             {completedOrders.length === 0 ? (
-              <div className="py-16 text-center rounded-2xl bg-[#231810] border border-[#3d291b] p-8 space-y-3">
-                <BearPaw className="w-10 h-10 text-[#8a7263] mx-auto" />
-                <h3 className="text-base font-bold text-white">Belum Ada Akun Premium</h3>
-                <p className="text-xs text-[#baa496] max-w-sm mx-auto">
-                  Anda belum memiliki akun aktif yang lunas. Silakan jelajahi katalog aplikasi premium kami.
+              <div className="py-16 text-center rounded-3xl bg-[#fcfaf7] border border-[#ebdccb] p-8 space-y-3 card-shadow">
+                <BearPaw className="w-10 h-10 text-[#dec4a6] mx-auto" />
+                <h3 className="text-base font-bold text-[#543827]">Belum Ada Akun Premium</h3>
+                <p className="text-xs text-[#7e5434] max-w-sm mx-auto">
+                  Anda belum memiliki akun aktif yang lunas. Silakan pilih aplikasi premium dari katalog kami.
                 </p>
                 <Link
                   href="/"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-[#c4622d] text-white hover:bg-[#b05220] transition-colors"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold bg-[#543827] text-white hover:bg-[#67442d] transition-colors"
                 >
                   Beli Akun Sekarang
                 </Link>
@@ -279,22 +278,22 @@ export default function UserDashboardPage() {
                   return (
                     <div
                       key={ord.id}
-                      className="rounded-2xl bg-[#231810] border border-[#3d291b] p-5 space-y-4 flex flex-col justify-between"
+                      className="rounded-3xl bg-[#fcfaf7] border border-[#ebdccb] p-6 space-y-4 flex flex-col justify-between card-shadow"
                     >
                       <div className="space-y-3">
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <span className="text-[10px] font-mono text-[#e89a42] font-bold block">
+                            <span className="text-[10px] font-mono text-[#9e6d42] font-bold block">
                               {ord.orderId}
                             </span>
-                            <h3 className="text-base font-bold text-white mt-0.5">{ord.productName}</h3>
-                            <p className="text-xs text-[#baa496]">{ord.variantName}</p>
+                            <h3 className="text-base font-bold text-[#543827] mt-0.5">{ord.productName}</h3>
+                            <p className="text-xs text-[#7e5434]">{ord.variantName}</p>
                           </div>
                           <span
                             className={`px-2.5 py-1 rounded-md text-[11px] font-bold ${
                               daysLeft > 0
-                                ? 'bg-[#1d3324] text-emerald-400 border border-emerald-500/40'
-                                : 'bg-[#321715] text-rose-300 border border-[#5c2825]'
+                                ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
+                                : 'bg-rose-50 text-rose-800 border border-rose-200'
                             }`}
                           >
                             {daysLeft > 0 ? `Aktif: ${daysLeft} Hari Lagi` : 'Kedaluwarsa'}
@@ -302,7 +301,7 @@ export default function UserDashboardPage() {
                         </div>
 
                         {/* Monospace Credentials Box */}
-                        <div className="p-3.5 rounded-xl bg-[#2a1d14] border border-[#442e1f] font-mono text-xs text-[#faf4ee] select-all whitespace-pre-wrap break-all leading-relaxed">
+                        <div className="p-4 rounded-2xl bg-[#f5efe6] border border-[#dec4a6] font-mono text-xs text-[#543827] select-all whitespace-pre-wrap break-all leading-relaxed">
                           {ord.accountDelivered}
                         </div>
                       </div>
@@ -311,7 +310,7 @@ export default function UserDashboardPage() {
                       <div className="pt-2 flex items-center gap-2">
                         <button
                           onClick={() => handleCopyAccount(ord.accountDelivered!, ord.orderId)}
-                          className="flex-1 py-2.5 px-3 rounded-xl font-bold text-xs bg-[#c4622d] hover:bg-[#b05220] text-white transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                          className="flex-1 py-2.5 px-3 rounded-2xl font-bold text-xs bg-[#543827] hover:bg-[#67442d] text-white transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
                         >
                           {copiedOrderId === ord.orderId ? (
                             <>
@@ -327,10 +326,10 @@ export default function UserDashboardPage() {
                         </button>
 
                         <a
-                          href={`https://wa.me/6281234567890?text=Halo%20Admin%20Sepia%20Bear,%20saya%20butuh%20bantuan%20garansi%20untuk%20pesanan%20${ord.orderId}`}
+                          href={`https://wa.me/6281234567890?text=Halo%20Admin%20Sepia%20Store,%20saya%20butuh%20bantuan%20garansi%20untuk%20pesanan%20${ord.orderId}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-2.5 rounded-xl bg-[#2a1d14] hover:bg-[#35251a] text-[#baa496] hover:text-white border border-[#3d291b] transition-colors"
+                          className="p-2.5 rounded-2xl bg-[#f5efe6] hover:bg-[#ebdccb] text-[#543827] border border-[#dec4a6] transition-colors"
                           title="Bantuan Garansi"
                         >
                           <ExternalLink className="w-4 h-4" />
@@ -346,10 +345,10 @@ export default function UserDashboardPage() {
 
         {/* TAB 2: SEMUA RIWAYAT PESANAN */}
         {activeTab === 'orders' && (
-          <div className="rounded-2xl bg-[#231810] border border-[#3d291b] overflow-hidden">
+          <div className="rounded-3xl bg-[#fcfaf7] border border-[#ebdccb] overflow-hidden card-shadow">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-[#dcd0c7]">
-                <thead className="bg-[#2a1d14] text-[#baa496] font-semibold uppercase tracking-wider text-[11px] border-b border-[#3d291b]">
+              <table className="w-full text-left text-xs text-[#3b281a]">
+                <thead className="bg-[#f5efe6] text-[#7e5434] font-semibold uppercase tracking-wider text-[11px] border-b border-[#ebdccb]">
                   <tr>
                     <th className="px-4 py-3">Order ID</th>
                     <th className="px-4 py-3">Aplikasi &amp; Varian</th>
@@ -359,46 +358,46 @@ export default function UserDashboardPage() {
                     <th className="px-4 py-3">Aksi</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#2d1e15]">
+                <tbody className="divide-y divide-[#ebdccb]">
                   {orders.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-4 py-8 text-center text-[#705c4f]">
+                      <td colSpan={6} className="px-4 py-8 text-center text-[#9e6d42]">
                         Belum ada riwayat pesanan.
                       </td>
                     </tr>
                   ) : (
                     orders.map((o) => (
-                      <tr key={o.id} className="hover:bg-[#2a1d14] transition-colors">
-                        <td className="px-4 py-3 font-mono font-bold text-[#e89a42]">
+                      <tr key={o.id} className="hover:bg-[#f5efe6] transition-colors">
+                        <td className="px-4 py-3 font-mono font-bold text-[#543827]">
                           {o.orderId}
                         </td>
                         <td className="px-4 py-3">
-                          <p className="font-semibold text-white">{o.productName}</p>
-                          <p className="text-[11px] text-[#8a7263]">{o.variantName}</p>
+                          <p className="font-bold text-[#543827]">{o.productName}</p>
+                          <p className="text-[11px] text-[#7e5434]">{o.variantName}</p>
                         </td>
-                        <td className="px-4 py-3 font-semibold text-white">
+                        <td className="px-4 py-3 font-extrabold text-[#543827]">
                           {formatRupiah(o.totalPayment)}
                         </td>
                         <td className="px-4 py-3">
                           <span
                             className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
                               o.status === 'completed'
-                                ? 'bg-[#1d3324] text-emerald-400 border border-emerald-500/40'
+                                ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
                                 : o.status === 'pending'
-                                ? 'bg-[#382316] text-[#e89a42] border border-[#5c3a24]'
-                                : 'bg-[#321715] text-rose-400 border border-[#5c2825]'
+                                ? 'bg-amber-50 text-amber-800 border border-amber-300'
+                                : 'bg-rose-50 text-rose-800 border border-rose-200'
                             }`}
                           >
                             {o.status}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-[#705c4f] text-[11px] whitespace-nowrap">
+                        <td className="px-4 py-3 text-[#9e6d42] text-[11px] whitespace-nowrap">
                           {new Date(o.createdAt).toLocaleString('id-ID')}
                         </td>
                         <td className="px-4 py-3">
                           <Link
                             href={`/order/${o.orderId}`}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#2a1d14] hover:bg-[#35251a] text-[#e89a42] border border-[#3d291b] transition-colors"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#f5efe6] hover:bg-[#ebdccb] text-[#543827] border border-[#dec4a6] transition-colors"
                           >
                             <span>Lihat Tagihan</span>
                             <ExternalLink className="w-3 h-3" />

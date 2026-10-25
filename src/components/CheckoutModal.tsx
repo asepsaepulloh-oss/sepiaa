@@ -27,12 +27,14 @@ interface Product {
 
 interface CheckoutModalProps {
   product: Product | null;
+  initialVariantId?: string;
   isOpen: boolean;
   onClose: () => void;
 }
 
 export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   product,
+  initialVariantId,
   isOpen,
   onClose,
 }) => {
@@ -46,10 +48,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   useEffect(() => {
     if (product && product.variants.length > 0) {
-      setSelectedVariantId(product.variants[0].id);
+      setSelectedVariantId(initialVariantId || product.variants[0].id);
       setErrorMessage(null);
     }
-  }, [product]);
+  }, [product, initialVariantId]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -63,7 +65,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   if (!isOpen || !product) return null;
 
-  const selectedVariant = product.variants.find((v) => v.id === selectedVariantId) || product.variants[0];
+  const selectedVariant =
+    product.variants.find((v) => v.id === selectedVariantId) || product.variants[0];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,50 +123,50 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#0e0a07]/90 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#2d1c13]/60 animate-in fade-in duration-200">
       <div
-        className="relative w-full max-w-xl max-h-[92vh] overflow-y-auto bg-[#231810] border border-[#3d291b] rounded-2xl text-[#faf4ee] flex flex-col"
+        className="relative w-full max-w-xl max-h-[92vh] overflow-y-auto bg-[#fcfaf7] border border-[#ebdccb] rounded-3xl shadow-2xl text-[#3b281a] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-[#3d291b] bg-[#231810]">
+        <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-[#ebdccb] bg-[#fcfaf7]">
           <div className="flex items-center gap-2">
-            <BearHead className="w-5 h-5 text-[#e89a42]" />
-            <h2 className="text-base font-bold text-[#faf4ee]">Checkout Sepia Bear</h2>
+            <BearHead className="w-5 h-5 text-[#7e5434]" />
+            <h2 className="text-base font-bold text-[#543827]">Checkout Sepia Store</h2>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-[#baa496] hover:text-white rounded-lg hover:bg-[#2e1f15] transition-colors"
+            className="p-1.5 text-[#7e5434] hover:text-[#543827] rounded-full hover:bg-[#f5efe6] transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-5">
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {/* Product Banner Info */}
-          <div className="flex gap-4 p-3.5 rounded-xl bg-[#2a1d14] border border-[#3d291b]">
+          <div className="flex gap-4 p-3.5 rounded-2xl bg-[#f5efe6] border border-[#ebdccb]">
             <img
               src={product.imageUrl}
               alt={product.name}
-              className="w-16 h-16 rounded-xl object-cover border border-[#4d3423] shrink-0"
+              className="w-16 h-16 rounded-xl object-cover border border-[#dec4a6] shrink-0"
             />
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h3 className="font-bold text-sm sm:text-base text-[#faf4ee] truncate">{product.name}</h3>
+                <h3 className="font-bold text-sm sm:text-base text-[#543827] truncate">{product.name}</h3>
                 {product.badge && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#382316] text-[#e89a42] border border-[#5c3a24]">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#dec4a6] text-[#543827] border border-[#cfa67c]">
                     {product.badge}
                   </span>
                 )}
               </div>
-              <p className="text-xs text-[#baa496] line-clamp-2 mt-1">{product.description}</p>
+              <p className="text-xs text-[#7e5434] line-clamp-2 mt-1">{product.description}</p>
             </div>
           </div>
 
           {/* Variant Selector */}
           <div>
-            <label className="block text-xs font-semibold text-[#cfbeb5] uppercase tracking-wider mb-2">
+            <label className="block text-xs font-semibold text-[#543827] uppercase tracking-wider mb-2">
               1. Pilih Durasi &amp; Paket
             </label>
             <div className="grid grid-cols-1 gap-2.5">
@@ -175,39 +178,39 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   <div
                     key={v.id}
                     onClick={() => setSelectedVariantId(v.id)}
-                    className={`p-3.5 rounded-xl border transition-colors cursor-pointer flex items-center justify-between gap-3 ${
+                    className={`p-3.5 rounded-2xl border transition-colors cursor-pointer flex items-center justify-between gap-3 ${
                       isSelected
-                        ? 'border-[#c4622d] bg-[#312015] text-[#faf4ee]'
-                        : 'border-[#3d291b] bg-[#2a1d14] hover:border-[#523724] text-[#dcd0c7]'
+                        ? 'border-[#543827] bg-[#f5efe6] text-[#543827] shadow-sm'
+                        : 'border-[#ebdccb] bg-white hover:border-[#dec4a6] text-[#7e5434]'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <div
                         className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
-                          isSelected ? 'border-[#c4622d] bg-[#c4622d]' : 'border-[#614736]'
+                          isSelected ? 'border-[#543827] bg-[#543827]' : 'border-[#dec4a6]'
                         }`}
                       >
-                        {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-[#19120c]" />}
+                        {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm">{v.name}</span>
+                          <span className="font-bold text-xs sm:text-sm">{v.name}</span>
                           {discount > 0 && (
-                            <span className="text-[10px] font-bold bg-[#1d3324] text-emerald-400 border border-emerald-500/40 px-1.5 py-0.2 rounded">
+                            <span className="text-[10px] font-bold bg-[#dec4a6] text-[#543827] px-1.5 py-0.2 rounded">
                               Hemat {discount}%
                             </span>
                           )}
                         </div>
                         {v.description && (
-                          <p className="text-xs text-[#baa496] mt-0.5">{v.description}</p>
+                          <p className="text-xs text-[#9e6d42] mt-0.5">{v.description}</p>
                         )}
-                        <div className="text-[11px] text-[#8a7263] mt-0.5">
+                        <div className="text-[11px] text-[#7e5434] mt-0.5">
                           {v.stockCount > 0 ? (
-                            <span className="text-emerald-400 font-medium">
+                            <span className="text-emerald-700 font-semibold">
                               Tersedia: {v.stockCount} akun siap kirim
                             </span>
                           ) : (
-                            <span className="text-[#e89a42] font-medium">
+                            <span className="text-amber-800 font-semibold">
                               Antrian Instan (Restock otomatis)
                             </span>
                           )}
@@ -216,9 +219,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     </div>
 
                     <div className="text-right shrink-0">
-                      <div className="text-sm font-bold text-[#e89a42]">{formatRupiah(v.price)}</div>
+                      <div className="text-sm font-extrabold text-[#543827]">{formatRupiah(v.price)}</div>
                       {v.originalPrice > v.price && (
-                        <div className="text-xs text-[#705c4f] line-through">
+                        <div className="text-xs text-[#9e6d42] line-through">
                           {formatRupiah(v.originalPrice)}
                         </div>
                       )}
@@ -231,7 +234,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
           {/* Customer Details Form */}
           <div className="space-y-3">
-            <label className="block text-xs font-semibold text-[#cfbeb5] uppercase tracking-wider">
+            <label className="block text-xs font-semibold text-[#543827] uppercase tracking-wider">
               2. Data Penerima Akun
             </label>
 
@@ -242,7 +245,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 required
-                className="w-full bg-[#2a1d14] border border-[#3d291b] focus:border-[#c4622d] rounded-xl px-3.5 py-2.5 text-sm text-[#faf4ee] placeholder-[#8a7263] focus:outline-none transition-colors"
+                className="w-full bg-[#f5efe6] border border-[#ebdccb] focus:border-[#543827] rounded-xl px-3.5 py-2.5 text-sm text-[#543827] placeholder-[#9e6d42] focus:outline-none transition-colors"
               />
             </div>
 
@@ -253,9 +256,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 value={customerWhatsapp}
                 onChange={(e) => setCustomerWhatsapp(e.target.value)}
                 required
-                className="w-full bg-[#2a1d14] border border-[#3d291b] focus:border-[#c4622d] rounded-xl px-3.5 py-2.5 text-sm text-[#faf4ee] placeholder-[#8a7263] focus:outline-none transition-colors"
+                className="w-full bg-[#f5efe6] border border-[#ebdccb] focus:border-[#543827] rounded-xl px-3.5 py-2.5 text-sm text-[#543827] placeholder-[#9e6d42] focus:outline-none transition-colors"
               />
-              <p className="text-[11px] text-[#baa496] mt-1">
+              <p className="text-[11px] text-[#9e6d42] mt-1">
                 Kredensial akun dan tanda terima akan dikirimkan juga ke nomor ini.
               </p>
             </div>
@@ -266,32 +269,32 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 placeholder="Email Penerima (Opsional)"
                 value={customerEmail}
                 onChange={(e) => setCustomerEmail(e.target.value)}
-                className="w-full bg-[#2a1d14] border border-[#3d291b] focus:border-[#c4622d] rounded-xl px-3.5 py-2.5 text-sm text-[#faf4ee] placeholder-[#8a7263] focus:outline-none transition-colors"
+                className="w-full bg-[#f5efe6] border border-[#ebdccb] focus:border-[#543827] rounded-xl px-3.5 py-2.5 text-sm text-[#543827] placeholder-[#9e6d42] focus:outline-none transition-colors"
               />
             </div>
           </div>
 
           {/* Payment Method Info */}
-          <div className="p-3.5 rounded-xl bg-[#2a1d14] border border-[#3d291b] flex items-center justify-between">
+          <div className="p-3.5 rounded-2xl bg-[#f5efe6] border border-[#ebdccb] flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-[#382316] border border-[#5c3a24] flex items-center justify-center shrink-0">
-                <QrCode className="w-5 h-5 text-[#e89a42]" />
+              <div className="w-9 h-9 rounded-xl bg-[#dec4a6] flex items-center justify-center shrink-0 text-[#543827]">
+                <QrCode className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-xs font-bold text-white">QRIS Instan (Pakasir)</p>
-                <p className="text-[11px] text-[#baa496]">
+                <p className="text-xs font-bold text-[#543827]">QRIS Instan (Pakasir)</p>
+                <p className="text-[11px] text-[#7e5434]">
                   BCA, BRI, Mandiri, BNI, Dana, GoPay, OVO, ShopeePay
                 </p>
               </div>
             </div>
-            <span className="text-[10px] font-semibold bg-[#1d3324] text-emerald-400 border border-emerald-500/40 px-2 py-0.5 rounded">
+            <span className="text-[10px] font-bold bg-[#dec4a6] text-[#543827] px-2 py-0.5 rounded">
               VERIFIKASI OTOMATIS
             </span>
           </div>
 
           {/* Error message */}
           {errorMessage && (
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-[#321715] border border-[#5c2825] text-rose-300 text-xs">
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMessage}</span>
             </div>
@@ -302,7 +305,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-bold text-sm bg-[#c4622d] hover:bg-[#b05220] text-white disabled:opacity-50 transition-colors cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl font-bold text-xs sm:text-sm bg-[#543827] hover:bg-[#67442d] text-[#fcfaf7] shadow-md transition-colors cursor-pointer"
             >
               {isSubmitting ? (
                 <>
@@ -311,14 +314,14 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 </>
               ) : (
                 <>
-                  <BearPaw className="w-4 h-4 text-[#faf4ee]" />
+                  <BearPaw className="w-4 h-4" />
                   <span>Lanjut Pembayaran ({formatRupiah(selectedVariant?.price || 0)})</span>
                 </>
               )}
             </button>
-            <p className="text-center text-[11px] text-[#baa496] mt-2 flex items-center justify-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Garansi Beruang: 100% Penggantian Akun Jika Terkendala</span>
+            <p className="text-center text-[11px] text-[#7e5434] mt-2 flex items-center justify-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
+              <span>Garansi 100% Penggantian Akun Jika Terkendala</span>
             </p>
           </div>
         </form>
