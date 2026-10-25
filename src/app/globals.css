@@ -1,43 +1,38 @@
 @import "tailwindcss";
 
 :root {
-  --background: #120d0a;
-  --foreground: #fbf6f0;
-  --card: #1d1611;
-  --card-border: #35261d;
-  --bear-espresso: #120d0a;
-  --bear-cocoa: #1c140f;
-  --bear-coffee: #251b14;
-  --bear-border: #3b2c22;
-  --bear-primary: #b45309;
-  --bear-caramel: #c86d34;
-  --bear-honey: #e59a44;
-  --bear-cream: #faefe3;
+  --background: #19120c;
+  --foreground: #faf4ee;
+  --card: #231810;
+  --card-border: #3d291b;
+  --bear-caramel: #c4622d;
+  --bear-honey: #e89a42;
+  --bear-cream: #faf4ee;
 }
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
+  background-color: #19120c;
+  color: #faf4ee;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Custom Scrollbar - Warm Chocolate */
+/* Custom Scrollbar - Solid Warm Coffee */
 ::-webkit-scrollbar {
   width: 7px;
   height: 7px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #120d0a;
+  background: #19120c;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #3b2c22;
+  background: #3d291b;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #543f31;
+  background: #543b27;
 }

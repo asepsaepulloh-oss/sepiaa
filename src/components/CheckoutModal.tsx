@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle2, ShieldCheck, AlertCircle, Loader2, QrCode } from 'lucide-react';
+import { X, ShieldCheck, AlertCircle, Loader2, QrCode } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { BearHead, BearPaw } from './BearIcon';
 
@@ -120,20 +120,20 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#0e0a07]/90 animate-in fade-in duration-200">
       <div
-        className="relative w-full max-w-xl max-h-[92vh] overflow-y-auto bg-[#17100b] border border-[#3b2a1e] rounded-2xl shadow-2xl text-[#fbf6f0] flex flex-col"
+        className="relative w-full max-w-xl max-h-[92vh] overflow-y-auto bg-[#231810] border border-[#3d291b] rounded-2xl text-[#faf4ee] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-[#312217] bg-[#17100b]/95 backdrop-blur-md">
+        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-[#3d291b] bg-[#231810]">
           <div className="flex items-center gap-2">
-            <BearHead className="w-5 h-5 text-[#e59a44]" />
-            <h2 className="text-base font-bold text-white">Checkout Sepia Bear</h2>
+            <BearHead className="w-5 h-5 text-[#e89a42]" />
+            <h2 className="text-base font-bold text-[#faf4ee]">Checkout Sepia Bear</h2>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-[#a89588] hover:text-white rounded-lg hover:bg-[#271a12] transition-colors"
+            className="p-1.5 text-[#baa496] hover:text-white rounded-lg hover:bg-[#2e1f15] transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -142,22 +142,22 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-5 space-y-5">
           {/* Product Banner Info */}
-          <div className="flex gap-4 p-3.5 rounded-xl bg-[#20150e] border border-[#382619]">
+          <div className="flex gap-4 p-3.5 rounded-xl bg-[#2a1d14] border border-[#3d291b]">
             <img
               src={product.imageUrl}
               alt={product.name}
-              className="w-16 h-16 rounded-xl object-cover border border-[#442f20] shrink-0"
+              className="w-16 h-16 rounded-xl object-cover border border-[#4d3423] shrink-0"
             />
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h3 className="font-bold text-sm sm:text-base text-white truncate">{product.name}</h3>
+                <h3 className="font-bold text-sm sm:text-base text-[#faf4ee] truncate">{product.name}</h3>
                 {product.badge && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#c86d34]/25 text-[#f0b27a] border border-[#c86d34]/40">
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#382316] text-[#e89a42] border border-[#5c3a24]">
                     {product.badge}
                   </span>
                 )}
               </div>
-              <p className="text-xs text-[#bcaaa0] line-clamp-2 mt-1">{product.description}</p>
+              <p className="text-xs text-[#baa496] line-clamp-2 mt-1">{product.description}</p>
             </div>
           </div>
 
@@ -175,39 +175,39 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   <div
                     key={v.id}
                     onClick={() => setSelectedVariantId(v.id)}
-                    className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                    className={`p-3.5 rounded-xl border transition-colors cursor-pointer flex items-center justify-between gap-3 ${
                       isSelected
-                        ? 'border-[#c86d34] bg-[#c86d34]/15 text-white shadow-sm'
-                        : 'border-[#332317] bg-[#1d140e] hover:border-[#4d3626] text-[#dcd0c7]'
+                        ? 'border-[#c4622d] bg-[#312015] text-[#faf4ee]'
+                        : 'border-[#3d291b] bg-[#2a1d14] hover:border-[#523724] text-[#dcd0c7]'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <div
                         className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
-                          isSelected ? 'border-[#c86d34] bg-[#c86d34]' : 'border-[#614736]'
+                          isSelected ? 'border-[#c4622d] bg-[#c4622d]' : 'border-[#614736]'
                         }`}
                       >
-                        {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-[#120d0a]" />}
+                        {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-[#19120c]" />}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-sm">{v.name}</span>
                           {discount > 0 && (
-                            <span className="text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.2 rounded">
+                            <span className="text-[10px] font-bold bg-[#1d3324] text-emerald-400 border border-emerald-500/40 px-1.5 py-0.2 rounded">
                               Hemat {discount}%
                             </span>
                           )}
                         </div>
                         {v.description && (
-                          <p className="text-xs text-[#a69286] mt-0.5">{v.description}</p>
+                          <p className="text-xs text-[#baa496] mt-0.5">{v.description}</p>
                         )}
-                        <div className="text-[11px] text-[#8a7266] mt-0.5">
+                        <div className="text-[11px] text-[#8a7263] mt-0.5">
                           {v.stockCount > 0 ? (
                             <span className="text-emerald-400 font-medium">
                               Tersedia: {v.stockCount} akun siap kirim
                             </span>
                           ) : (
-                            <span className="text-[#e59a44] font-medium">
+                            <span className="text-[#e89a42] font-medium">
                               Antrian Instan (Restock otomatis)
                             </span>
                           )}
@@ -216,9 +216,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     </div>
 
                     <div className="text-right shrink-0">
-                      <div className="text-sm font-bold text-[#e59a44]">{formatRupiah(v.price)}</div>
+                      <div className="text-sm font-bold text-[#e89a42]">{formatRupiah(v.price)}</div>
                       {v.originalPrice > v.price && (
-                        <div className="text-xs text-[#735e53] line-through">
+                        <div className="text-xs text-[#705c4f] line-through">
                           {formatRupiah(v.originalPrice)}
                         </div>
                       )}
@@ -242,7 +242,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 required
-                className="w-full bg-[#1f1610] border border-[#3b2a1e] focus:border-[#c86d34] rounded-xl px-3.5 py-2.5 text-sm text-[#fbf6f0] placeholder-[#7d675b] focus:outline-none transition-colors"
+                className="w-full bg-[#2a1d14] border border-[#3d291b] focus:border-[#c4622d] rounded-xl px-3.5 py-2.5 text-sm text-[#faf4ee] placeholder-[#8a7263] focus:outline-none transition-colors"
               />
             </div>
 
@@ -253,9 +253,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 value={customerWhatsapp}
                 onChange={(e) => setCustomerWhatsapp(e.target.value)}
                 required
-                className="w-full bg-[#1f1610] border border-[#3b2a1e] focus:border-[#c86d34] rounded-xl px-3.5 py-2.5 text-sm text-[#fbf6f0] placeholder-[#7d675b] focus:outline-none transition-colors"
+                className="w-full bg-[#2a1d14] border border-[#3d291b] focus:border-[#c4622d] rounded-xl px-3.5 py-2.5 text-sm text-[#faf4ee] placeholder-[#8a7263] focus:outline-none transition-colors"
               />
-              <p className="text-[11px] text-[#8a7266] mt-1">
+              <p className="text-[11px] text-[#baa496] mt-1">
                 Kredensial akun dan tanda terima akan dikirimkan juga ke nomor ini.
               </p>
             </div>
@@ -266,32 +266,32 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 placeholder="Email Penerima (Opsional)"
                 value={customerEmail}
                 onChange={(e) => setCustomerEmail(e.target.value)}
-                className="w-full bg-[#1f1610] border border-[#3b2a1e] focus:border-[#c86d34] rounded-xl px-3.5 py-2.5 text-sm text-[#fbf6f0] placeholder-[#7d675b] focus:outline-none transition-colors"
+                className="w-full bg-[#2a1d14] border border-[#3d291b] focus:border-[#c4622d] rounded-xl px-3.5 py-2.5 text-sm text-[#faf4ee] placeholder-[#8a7263] focus:outline-none transition-colors"
               />
             </div>
           </div>
 
           {/* Payment Method Info */}
-          <div className="p-3.5 rounded-xl bg-[#20150e] border border-[#382619] flex items-center justify-between">
+          <div className="p-3.5 rounded-xl bg-[#2a1d14] border border-[#3d291b] flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-[#c86d34]/15 border border-[#c86d34]/30 flex items-center justify-center shrink-0">
-                <QrCode className="w-5 h-5 text-[#e59a44]" />
+              <div className="w-9 h-9 rounded-lg bg-[#382316] border border-[#5c3a24] flex items-center justify-center shrink-0">
+                <QrCode className="w-5 h-5 text-[#e89a42]" />
               </div>
               <div>
                 <p className="text-xs font-bold text-white">QRIS Instan (Pakasir)</p>
-                <p className="text-[11px] text-[#a69286]">
+                <p className="text-[11px] text-[#baa496]">
                   BCA, BRI, Mandiri, BNI, Dana, GoPay, OVO, ShopeePay
                 </p>
               </div>
             </div>
-            <span className="text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded">
+            <span className="text-[10px] font-semibold bg-[#1d3324] text-emerald-400 border border-emerald-500/40 px-2 py-0.5 rounded">
               VERIFIKASI OTOMATIS
             </span>
           </div>
 
           {/* Error message */}
           {errorMessage && (
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs">
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-[#321715] border border-[#5c2825] text-rose-300 text-xs">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMessage}</span>
             </div>
@@ -302,7 +302,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-[#c86d34] via-[#b85c27] to-[#96471c] hover:from-[#d97736] hover:to-[#a75020] text-white shadow-lg shadow-amber-950/40 disabled:opacity-50 transition-all cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl font-bold text-sm bg-[#c4622d] hover:bg-[#b05220] text-white disabled:opacity-50 transition-colors cursor-pointer"
             >
               {isSubmitting ? (
                 <>
@@ -311,12 +311,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 </>
               ) : (
                 <>
-                  <BearPaw className="w-4 h-4 text-[#f0b27a]" />
+                  <BearPaw className="w-4 h-4 text-[#faf4ee]" />
                   <span>Lanjut Pembayaran ({formatRupiah(selectedVariant?.price || 0)})</span>
                 </>
               )}
             </button>
-            <p className="text-center text-[11px] text-[#8a7266] mt-2 flex items-center justify-center gap-1">
+            <p className="text-center text-[11px] text-[#baa496] mt-2 flex items-center justify-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
               <span>Garansi Beruang: 100% Penggantian Akun Jika Terkendala</span>
             </p>
