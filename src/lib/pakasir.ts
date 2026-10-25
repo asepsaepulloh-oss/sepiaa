@@ -57,7 +57,7 @@ export async function createPakasirTransaction(params: {
       fee: 750,
       total_payment: amount + 750,
       payment_method: method,
-      payment_number: '081234567890',
+      payment_number: '082323240186',
       qr_string: `00020101021226670014ID.LINKAJA.WWW01189360091430000000000215${orderId}52045812530336054${amount}5802ID5911SEPIA BEAR6007JAKARTA62070703A016304`,
       expired_at: expiresAt,
       is_sandbox: true,

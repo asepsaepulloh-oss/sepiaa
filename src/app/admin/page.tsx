@@ -1170,6 +1170,16 @@ export default function AdminPage() {
                 </div>
 
                 <div className="space-y-2">
+                  <label className="block text-xs font-bold text-[#543827]">Nomor WhatsApp Customer Service</label>
+                  <input
+                    type="text"
+                    defaultValue="6282323240186"
+                    className="w-full bg-[#f5efe6] border border-[#ebdccb] rounded-xl px-4 py-2.5 text-xs text-[#543827] font-semibold focus:outline-none"
+                  />
+                  <p className="text-[10px] text-[#9e6d42]">Nomor resmi CS Sepia Store: +62 823-2324-0186.</p>
+                </div>
+
+                <div className="space-y-2">
                   <label className="block text-xs font-bold text-[#543827]">Payment Gateway Status</label>
                   <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 font-semibold flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-emerald-700" />

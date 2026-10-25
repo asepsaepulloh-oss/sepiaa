@@ -430,7 +430,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
 
               <div className="pt-2">
                 <a
-                  href={`https://wa.me/6281234567890?text=Halo%20Admin%20Sepia%20Store,%20konfirmasi%20pesanan%20dengan%20ID%20${order.orderId}`}
+                  href={`https://wa.me/6282323240186?text=Halo%20Admin%20Sepia%20Store,%20konfirmasi%20pesanan%20dengan%20ID%20${order.orderId}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-2xl text-xs font-semibold bg-[#f5efe6] hover:bg-[#ebdccb] text-[#543827] border border-[#dec4a6] transition-colors"

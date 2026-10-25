@@ -286,7 +286,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             <div>
               <input
                 type="tel"
-                placeholder="Nomor WhatsApp (Contoh: 08123456789)"
+                placeholder="Nomor WhatsApp (Contoh: 082323240186)"
                 value={customerWhatsapp}
                 onChange={(e) => setCustomerWhatsapp(e.target.value)}
                 required

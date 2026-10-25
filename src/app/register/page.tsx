@@ -88,7 +88,7 @@ export default function RegisterPage() {
               <Phone className="w-4 h-4 text-[#9e6d42] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="tel"
-                placeholder="08123456789"
+                placeholder="082323240186"
                 value={whatsapp}
                 onChange={(e) => setWhatsapp(e.target.value)}
                 required

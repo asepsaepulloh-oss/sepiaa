@@ -566,12 +566,12 @@ export default function HomePage() {
             <ul className="space-y-2 text-xs">
               <li>
                 <a
-                  href="https://wa.me/6281234567890"
+                  href="https://wa.me/6282323240186"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-white transition-colors"
                 >
-                  WhatsApp CS Resmi
+                  WhatsApp CS Resmi (0823-2324-0186)
                 </a>
               </li>
               <li><span className="text-[#cfa67c]">Garansi Penggantian Penuh</span></li>

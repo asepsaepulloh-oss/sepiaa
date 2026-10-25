@@ -326,7 +326,7 @@ export default function UserDashboardPage() {
                         </button>
 
                         <a
-                          href={`https://wa.me/6281234567890?text=Halo%20Admin%20Sepia%20Store,%20saya%20butuh%20bantuan%20garansi%20untuk%20pesanan%20${ord.orderId}`}
+                          href={`https://wa.me/6282323240186?text=Halo%20Admin%20Sepia%20Store,%20saya%20butuh%20bantuan%20garansi%20untuk%20pesanan%20${ord.orderId}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="p-2.5 rounded-2xl bg-[#f5efe6] hover:bg-[#ebdccb] text-[#543827] border border-[#dec4a6] transition-colors"

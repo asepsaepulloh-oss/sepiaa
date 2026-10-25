@@ -64,7 +64,7 @@ export default function LoginPage() {
               <Phone className="w-4 h-4 text-[#9e6d42] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
-                placeholder="08123456789, email, atau username admin"
+                placeholder="082323240186, email, atau username admin"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 required
