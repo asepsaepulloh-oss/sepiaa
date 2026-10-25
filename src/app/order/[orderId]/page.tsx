@@ -34,6 +34,7 @@ interface OrderData {
   status: 'pending' | 'completed' | 'expired' | 'canceled';
   accountDelivered: string | null;
   expiredAt: number | null;
+  isSandbox?: boolean;
   createdAt: number;
   completedAt: number | null;
 }
@@ -356,24 +357,26 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                   </ol>
                 </div>
 
-                {/* Sandbox Simulation Button */}
-                <div className="pt-2 border-t border-[#312015]">
-                  <button
-                    onClick={handleSimulatePayment}
-                    disabled={isSimulating}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-semibold bg-[#1d3324] hover:bg-[#25422f] text-emerald-400 border border-emerald-500/40 transition-colors cursor-pointer"
-                  >
-                    {isSimulating ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Zap className="w-3.5 h-3.5" />
-                    )}
-                    <span>Simulasi Bayar Sekarang (Sandbox Mode)</span>
-                  </button>
-                  <p className="text-[10px] text-[#8a7263] mt-1">
-                    Tombol pengujian: langsung menyelesaikan pembayaran &amp; mengirim akun tanpa scan.
-                  </p>
-                </div>
+                {/* Sandbox Simulation Button: HANYA TAMPIL JIKA PAKASIR_SANDBOX=true */}
+                {order.isSandbox && (
+                  <div className="pt-2 border-t border-[#312015]">
+                    <button
+                      onClick={handleSimulatePayment}
+                      disabled={isSimulating}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-semibold bg-[#1d3324] hover:bg-[#25422f] text-emerald-400 border border-emerald-500/40 transition-colors cursor-pointer"
+                    >
+                      {isSimulating ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Zap className="w-3.5 h-3.5" />
+                      )}
+                      <span>Simulasi Bayar Sekarang (Sandbox Mode)</span>
+                    </button>
+                    <p className="text-[10px] text-[#8a7263] mt-1">
+                      Tombol pengujian: langsung menyelesaikan pembayaran &amp; mengirim akun tanpa scan.
+                    </p>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="rounded-2xl bg-[#231810] border border-[#3d291b] p-6 text-center space-y-3">

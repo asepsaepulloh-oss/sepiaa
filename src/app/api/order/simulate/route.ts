@@ -5,6 +5,13 @@ import { simulatePakasirPayment } from '@/lib/pakasir';
 
 export async function POST(req: NextRequest) {
   try {
+    if (process.env.PAKASIR_SANDBOX !== 'true') {
+      return NextResponse.json(
+        { error: 'Mode simulasi dinonaktifkan karena sistem berada dalam mode produksi (PAKASIR_SANDBOX=false).' },
+        { status: 403 }
+      );
+    }
+
     await ensureDbReady();
     const body = await req.json();
     const { orderId } = body;

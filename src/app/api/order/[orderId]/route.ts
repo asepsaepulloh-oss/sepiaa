@@ -42,6 +42,8 @@ export async function GET(
       }
     }
 
+    const isSandbox = process.env.PAKASIR_SANDBOX === 'true';
+
     return NextResponse.json({
       success: true,
       order: {
@@ -59,6 +61,7 @@ export async function GET(
         status: order.status,
         accountDelivered: order.account_delivered,
         expiredAt: order.expired_at,
+        isSandbox,
         createdAt: order.created_at,
         completedAt: order.completed_at,
       },

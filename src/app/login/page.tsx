@@ -27,10 +27,11 @@ export default function LoginPage() {
 
       const data = await res.json();
       if (res.ok && data.success) {
-        router.push('/dashboard');
+        const targetUrl = data.redirectUrl || (data.role === 'admin' ? '/admin' : '/dashboard');
+        router.push(targetUrl);
         router.refresh();
       } else {
-        setErrorMessage(data.error || 'Login gagal. Periksa nomor WhatsApp dan password Anda.');
+        setErrorMessage(data.error || 'Login gagal. Periksa data login Anda.');
       }
     } catch (err: any) {
       setErrorMessage(err.message || 'Koneksi ke server gagal');
@@ -57,13 +58,13 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-[#cfbeb5] mb-1.5">
-              Nomor WhatsApp atau Email
+              WhatsApp / Email / Username
             </label>
             <div className="relative">
               <Phone className="w-4 h-4 text-[#8a7263] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
-                placeholder="08123456789 atau email@domain.com"
+                placeholder="08123456789, email, atau username admin"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 required
