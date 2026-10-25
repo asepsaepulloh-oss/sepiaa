@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, ShieldCheck, AlertCircle, Loader2, QrCode } from 'lucide-react';
+import { X, ShieldCheck, AlertCircle, Loader2, QrCode, Check, UserCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { BearHead, BearPaw } from './BearIcon';
 
@@ -43,15 +43,39 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [customerName, setCustomerName] = useState('');
   const [customerWhatsapp, setCustomerWhatsapp] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
+  const [currentUser, setCurrentUser] = useState<{ name: string; whatsapp: string; email: string | null } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Ambil data user yang sedang login untuk auto-fill formulir checkout
+  useEffect(() => {
+    async function loadLoggedUser() {
+      try {
+        const res = await fetch('/api/user/check');
+        const data = await res.json();
+        if (data.authenticated && data.user) {
+          setCurrentUser(data.user);
+          setCustomerName(data.user.name || '');
+          setCustomerWhatsapp(data.user.whatsapp || '');
+          setCustomerEmail(data.user.email || '');
+        }
+      } catch {}
+    }
+    loadLoggedUser();
+  }, []);
+
+  // Update varian dan pastikan form terisi otomatis jika modal dibuka
   useEffect(() => {
     if (product && product.variants.length > 0) {
       setSelectedVariantId(initialVariantId || product.variants[0].id);
       setErrorMessage(null);
     }
-  }, [product, initialVariantId]);
+    if (currentUser) {
+      if (!customerName) setCustomerName(currentUser.name || '');
+      if (!customerWhatsapp) setCustomerWhatsapp(currentUser.whatsapp || '');
+      if (!customerEmail) setCustomerEmail(currentUser.email || '');
+    }
+  }, [product, initialVariantId, isOpen, currentUser]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -234,9 +258,19 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
           {/* Customer Details Form */}
           <div className="space-y-3">
-            <label className="block text-xs font-semibold text-[#543827] uppercase tracking-wider">
-              2. Data Penerima Akun
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-semibold text-[#543827] uppercase tracking-wider">
+                2. Data Penerima Akun
+              </label>
+
+              {/* Status Badge jika Form Terisi Otomatis dari Akun Login */}
+              {currentUser && (
+                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                  <UserCheck className="w-3 h-3 text-emerald-700" />
+                  <span>Otomatis terisi dari akun ({currentUser.name})</span>
+                </span>
+              )}
+            </div>
 
             <div>
               <input

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { client, ensureDbReady } from '@/lib/turso';
 import { createPakasirTransaction } from '@/lib/pakasir';
+import { getUserFromRequest } from '@/lib/auth-user';
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,6 +16,10 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Ambil user jika sedang login
+    const loggedInUser = await getUserFromRequest(req);
+    const userId = loggedInUser ? loggedInUser.id : null;
 
     // Ambil data varian dan produk
     const varRes = await client.execute({
@@ -37,7 +42,6 @@ export async function POST(req: NextRequest) {
     const price = Number(item.price);
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const randSuffix = Math.random().toString(36).substring(2, 7).toUpperCase();
-    // Gunakan format Order ID alphanumeric aman untuk URL Pakasir v2
     const orderId = `SEP${dateStr}${randSuffix}`;
 
     // Buat transaksi di Pakasir API v2
@@ -53,17 +57,18 @@ export async function POST(req: NextRequest) {
     const expiredAt = payment.expired_at ? new Date(payment.expired_at).getTime() : now + 15 * 60 * 1000;
     const txnId = payment.txn_id || null;
 
-    // Simpan order di database
+    // Simpan order di database beserta user_id (jika login)
     await client.execute({
       sql: `INSERT INTO orders (
-              id, order_id, product_id, variant_id, product_name, variant_name,
+              id, order_id, user_id, product_id, variant_id, product_name, variant_name,
               amount, fee, total_payment, customer_name, customer_whatsapp,
               customer_email, payment_method, payment_number, txn_id, qr_string,
               status, expired_at, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`,
       args: [
         `ord-${Math.random().toString(36).substring(2, 9)}`,
         orderId,
+        userId,
         String(item.product_id),
         variantId,
         String(item.product_name),
