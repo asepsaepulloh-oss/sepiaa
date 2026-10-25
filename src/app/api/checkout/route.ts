@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
     const payment = await createPakasirTransaction({
       method: 'qris',
       orderId,
-      amount: price,
+      baseAmount: price,
     });
 
     const now = Date.now();

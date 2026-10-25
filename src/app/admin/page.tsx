@@ -152,6 +152,16 @@ export default function AdminPage() {
   const [bulkRawText, setBulkRawText] = useState('');
   const [isSubmittingBulkStock, setIsSubmittingBulkStock] = useState(false);
 
+  // Settings Form State
+  const [settingsStoreName, setSettingsStoreName] = useState('Sepia Store');
+  const [settingsAdminWhatsapp, setSettingsAdminWhatsapp] = useState('6282323240186');
+  const [settingsPakasirProject, setSettingsPakasirProject] = useState('');
+  const [settingsPakasirApiKey, setSettingsPakasirApiKey] = useState('');
+  const [settingsPakasirSandbox, setSettingsPakasirSandbox] = useState(false);
+  const [settingsFeeMode, setSettingsFeeMode] = useState<'customer' | 'merchant'>('customer');
+  const [settingsAnnouncement, setSettingsAnnouncement] = useState('');
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+
   // Copy & Toast
   const [copiedOrderId, setCopiedOrderId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<{ title: string; desc: string } | null>(null);
@@ -181,6 +191,16 @@ export default function AdminPage() {
         setVariants(data.variants || []);
         setProducts(data.products || []);
         setCustomers(data.customers || []);
+
+        if (data.settings) {
+          setSettingsStoreName(data.settings.store_name || 'Sepia Store');
+          setSettingsAdminWhatsapp(data.settings.admin_whatsapp || '6282323240186');
+          setSettingsPakasirProject(data.settings.pakasir_project || '');
+          setSettingsPakasirApiKey(data.settings.pakasir_api_key || '');
+          setSettingsPakasirSandbox(Boolean(data.settings.pakasir_sandbox));
+          setSettingsFeeMode(data.settings.fee_mode || 'customer');
+          setSettingsAnnouncement(data.settings.announcement_text || '');
+        }
 
         if (data.categories?.length > 0 && !prodCategory) {
           setProdCategory(data.categories[0].id);
@@ -232,6 +252,38 @@ export default function AdminPage() {
       setLoginError(err.message || 'Koneksi gagal');
     } finally {
       setIsLoggingIn(false);
+    }
+  };
+
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingSettings(true);
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          store_name: settingsStoreName,
+          admin_whatsapp: settingsAdminWhatsapp,
+          pakasir_project: settingsPakasirProject,
+          pakasir_api_key: settingsPakasirApiKey,
+          pakasir_sandbox: settingsPakasirSandbox,
+          fee_mode: settingsFeeMode,
+          announcement_text: settingsAnnouncement,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast('Berhasil Disimpan', data.message || 'Pengaturan toko berhasil diperbarui.');
+        fetchDashboardData();
+      } else {
+        alert(data.error || 'Gagal menyimpan pengaturan');
+      }
+    } catch (err: any) {
+      alert('Error: ' + err.message);
+    } finally {
+      setIsSavingSettings(false);
     }
   };
 
@@ -1144,57 +1196,185 @@ export default function AdminPage() {
           {activeTab === 'pengaturan' && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-xl font-extrabold text-[#543827]">Pengaturan Toko</h2>
-                <p className="text-xs text-[#7e5434]">Atur profil toko, status gateway pembayaran, dan informasi kontak.</p>
+                <h2 className="text-xl font-extrabold text-[#543827]">Pengaturan Toko &amp; Pembayaran</h2>
+                <p className="text-xs text-[#7e5434]">
+                  Atur profil toko, nomor CS, akun gateway Pakasir API v2, dan pembebanan biaya transaksi.
+                </p>
               </div>
 
-              <div className="bg-[#fcfaf7] rounded-3xl border border-[#ebdccb] card-shadow p-6 sm:p-8 space-y-6 max-w-2xl">
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-[#543827]">Nama Toko</label>
-                  <input
-                    type="text"
-                    defaultValue="Sepia Store"
-                    className="w-full bg-[#f5efe6] border border-[#ebdccb] rounded-xl px-4 py-2.5 text-xs text-[#543827] font-semibold focus:outline-none"
-                  />
-                </div>
+              <form onSubmit={handleSaveSettings} className="space-y-6 max-w-3xl">
+                {/* 1. Profil Toko */}
+                <div className="bg-[#fcfaf7] rounded-3xl border border-[#ebdccb] card-shadow p-6 sm:p-8 space-y-5">
+                  <h3 className="text-xs font-bold text-[#543827] uppercase tracking-wider">
+                    1. Identitas &amp; Kontak Toko
+                  </h3>
 
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-[#543827]">Username Administrator</label>
-                  <input
-                    type="text"
-                    value={adminUsername}
-                    disabled
-                    className="w-full bg-[#f5efe6] border border-[#ebdccb] rounded-xl px-4 py-2.5 text-xs text-[#543827] font-semibold focus:outline-none opacity-80"
-                  />
-                  <p className="text-[10px] text-[#9e6d42]">Dikonfigurasi via variabel ADMIN_USERNAME.</p>
-                </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-bold text-[#543827]">Nama Toko</label>
+                      <input
+                        type="text"
+                        value={settingsStoreName}
+                        onChange={(e) => setSettingsStoreName(e.target.value)}
+                        required
+                        className="w-full bg-[#f5efe6] border border-[#ebdccb] rounded-xl px-4 py-2.5 text-xs text-[#543827] font-semibold focus:outline-none focus:border-[#543827]"
+                      />
+                    </div>
 
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-[#543827]">Nomor WhatsApp Customer Service</label>
-                  <input
-                    type="text"
-                    defaultValue="6282323240186"
-                    className="w-full bg-[#f5efe6] border border-[#ebdccb] rounded-xl px-4 py-2.5 text-xs text-[#543827] font-semibold focus:outline-none"
-                  />
-                  <p className="text-[10px] text-[#9e6d42]">Nomor resmi CS Sepia Store: +62 823-2324-0186.</p>
-                </div>
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-bold text-[#543827]">Nomor WhatsApp CS Resmi</label>
+                      <input
+                        type="tel"
+                        value={settingsAdminWhatsapp}
+                        onChange={(e) => setSettingsAdminWhatsapp(e.target.value)}
+                        required
+                        placeholder="6282323240186"
+                        className="w-full bg-[#f5efe6] border border-[#ebdccb] rounded-xl px-4 py-2.5 text-xs text-[#543827] font-semibold focus:outline-none focus:border-[#543827]"
+                      />
+                      <p className="text-[10px] text-[#9e6d42]">Contoh: 6282323240186 (otomatis dipakai di tautan CS).</p>
+                    </div>
+                  </div>
 
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-[#543827]">Payment Gateway Status</label>
-                  <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 font-semibold flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-700" />
-                    <span>Pakasir API v2 Aktif &amp; Terintegrasi</span>
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-[#543827]">Teks Pengumuman Banner (Opsional)</label>
+                    <input
+                      type="text"
+                      value={settingsAnnouncement}
+                      onChange={(e) => setSettingsAnnouncement(e.target.value)}
+                      placeholder="Contoh: Diskon spesial Ramadhan hemat hingga 80% untuk semua akun!"
+                      className="w-full bg-[#f5efe6] border border-[#ebdccb] rounded-xl px-4 py-2.5 text-xs text-[#543827] focus:outline-none focus:border-[#543827]"
+                    />
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => showToast('Disimpan', 'Pengaturan toko berhasil diperbarui.')}
-                  className="bg-[#543827] hover:bg-[#67442d] text-[#fcfaf7] font-bold px-6 py-3 rounded-2xl text-xs transition-colors shadow-md cursor-pointer"
-                >
-                  Simpan Perubahan
-                </button>
-              </div>
+                {/* 2. Biaya Transaksi Pakasir (Fee Charge Mode) */}
+                <div className="bg-[#fcfaf7] rounded-3xl border border-[#ebdccb] card-shadow p-6 sm:p-8 space-y-5">
+                  <div>
+                    <h3 className="text-xs font-bold text-[#543827] uppercase tracking-wider">
+                      2. Pembebanan Biaya Layanan QRIS (Pakasir Fee)
+                    </h3>
+                    <p className="text-xs text-[#7e5434] mt-0.5">
+                      Pilih pihak yang menanggung biaya transaksi QRIS (0.7% + Rp 310).
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    {/* Option: Dibebankan ke Pembeli */}
+                    <div
+                      onClick={() => setSettingsFeeMode('customer')}
+                      className={`p-4 rounded-2xl border transition-colors cursor-pointer space-y-1.5 ${
+                        settingsFeeMode === 'customer'
+                          ? 'border-[#543827] bg-[#f5efe6] shadow-sm'
+                          : 'border-[#ebdccb] bg-white hover:border-[#dec4a6]'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-xs text-[#543827]">
+                          Dibebankan ke Pembeli / User
+                        </span>
+                        <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-full">
+                          Rekomendasi
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-[#7e5434] leading-relaxed">
+                        Biaya QRIS ditambahkan ke total invoice pembeli. Penjual menerima <strong>100% uang bersih</strong> tanpa potongan fee.
+                      </p>
+                    </div>
+
+                    {/* Option: Ditanggung Penjual */}
+                    <div
+                      onClick={() => setSettingsFeeMode('merchant')}
+                      className={`p-4 rounded-2xl border transition-colors cursor-pointer space-y-1.5 ${
+                        settingsFeeMode === 'merchant'
+                          ? 'border-[#543827] bg-[#f5efe6] shadow-sm'
+                          : 'border-[#ebdccb] bg-white hover:border-[#dec4a6]'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-xs text-[#543827]">
+                          Ditanggung Penjual / Admin
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-[#7e5434] leading-relaxed">
+                        Pembeli hanya membayar harga produk murni. Biaya QRIS dipotong langsung dari keuntungan toko.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Konfigurasi Gateway Pakasir API v2 */}
+                <div className="bg-[#fcfaf7] rounded-3xl border border-[#ebdccb] card-shadow p-6 sm:p-8 space-y-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-xs font-bold text-[#543827] uppercase tracking-wider">
+                        3. Konfigurasi Gateway Pakasir (Resmi API v2)
+                      </h3>
+                      <p className="text-xs text-[#7e5434] mt-0.5">
+                        Ambil slug proyek dan API Key dari dashboard <a href="https://app.pakasir.com" target="_blank" rel="noopener noreferrer" className="underline font-bold text-[#543827]">app.pakasir.com</a>.
+                      </p>
+                    </div>
+                    <span className="text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-full">
+                      API v2
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-bold text-[#543827]">Slug Proyek Pakasir</label>
+                      <input
+                        type="text"
+                        value={settingsPakasirProject}
+                        onChange={(e) => setSettingsPakasirProject(e.target.value)}
+                        placeholder="Contoh: sepiastore"
+                        className="w-full bg-[#f5efe6] border border-[#ebdccb] rounded-xl px-4 py-2.5 text-xs text-[#543827] font-semibold focus:outline-none focus:border-[#543827]"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-bold text-[#543827]">API Key Pakasir</label>
+                      <input
+                        type="password"
+                        value={settingsPakasirApiKey}
+                        onChange={(e) => setSettingsPakasirApiKey(e.target.value)}
+                        placeholder="api-key-rahasia-proyek"
+                        className="w-full bg-[#f5efe6] border border-[#ebdccb] rounded-xl px-4 py-2.5 text-xs text-[#543827] font-semibold focus:outline-none focus:border-[#543827]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Mode Sandbox Toggle */}
+                  <div className="p-4 rounded-2xl bg-[#f5efe6] border border-[#ebdccb] flex items-center justify-between gap-4">
+                    <div>
+                      <span className="text-xs font-bold text-[#543827] block">
+                        Mode Sandbox Pakasir (Uji Coba)
+                      </span>
+                      <p className="text-[11px] text-[#7e5434]">
+                        Centang ini HANYA jika proyek Pakasir Anda masih mode Sandbox. Jika dinonaktifkan (mode produksi), tombol simulasi pembayaran otomatis disembunyikan.
+                      </p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={settingsPakasirSandbox}
+                        onChange={(e) => setSettingsPakasirSandbox(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-[#dec4a6] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[#dec4a6] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#543827]"></div>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={isSavingSettings}
+                    className="bg-[#543827] hover:bg-[#67442d] text-[#fcfaf7] font-bold px-8 py-3.5 rounded-2xl text-xs transition-colors shadow-md flex items-center gap-2 cursor-pointer"
+                  >
+                    {isSavingSettings ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                    <span>Simpan Pengaturan Toko &amp; Biaya</span>
+                  </button>
+                </div>
+              </form>
             </div>
           )}
         </main>

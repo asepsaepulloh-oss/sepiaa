@@ -85,3 +85,9 @@ export const adminSessions = sqliteTable('admin_sessions', {
   username: text('username').notNull(),
   expiresAt: integer('expires_at').notNull(),
 });
+
+export const storeSettings = sqliteTable('store_settings', {
+  key: text('key').primaryKey(),
+  value: text('value').notNull(),
+  updatedAt: integer('updated_at').notNull(),
+});

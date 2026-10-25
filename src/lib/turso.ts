@@ -125,6 +125,14 @@ export async function ensureDbReady() {
       );
     `);
 
+    await client.execute(`
+      CREATE TABLE IF NOT EXISTS store_settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+    `);
+
     // Tambah kolom ke orders jika database lama belum memilikinya
     try {
       await client.execute('ALTER TABLE orders ADD COLUMN txn_id TEXT;');

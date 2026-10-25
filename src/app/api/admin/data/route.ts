@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { client, ensureDbReady } from '@/lib/turso';
+import { getStoreSettings } from '@/lib/settings';
 
 export async function GET(req: NextRequest) {
   try {
@@ -128,9 +129,12 @@ export async function GET(req: NextRequest) {
       createdAt: Number(r.created_at),
     }));
 
+    const settings = await getStoreSettings();
+
     return NextResponse.json({
       success: true,
       adminUsername,
+      settings,
       metrics: {
         totalRevenue,
         totalOrders,

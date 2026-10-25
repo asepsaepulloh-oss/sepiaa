@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import { client, ensureDbReady } from '@/lib/turso';
+import { getStoreSettings } from '@/lib/settings';
 
 export async function GET() {
   try {
     await ensureDbReady();
+    const settings = await getStoreSettings();
 
     // 1. Ambil kategori
     const catRes = await client.execute('SELECT * FROM categories ORDER BY sort_order ASC');
@@ -75,6 +77,11 @@ export async function GET() {
       success: true,
       categories,
       products,
+      settings: {
+        store_name: settings.store_name,
+        admin_whatsapp: settings.admin_whatsapp,
+        announcement_text: settings.announcement_text,
+      },
     });
   } catch (err: any) {
     console.error('Products API error:', err.message);

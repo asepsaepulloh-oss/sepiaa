@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { client, ensureDbReady } from '@/lib/turso';
 import { getPakasirTransactionDetail } from '@/lib/pakasir';
 import { assignStockToOrder } from '@/lib/stock';
+import { getStoreSettings } from '@/lib/settings';
 
 export async function GET(
   _req: NextRequest,
@@ -42,7 +43,8 @@ export async function GET(
       }
     }
 
-    const isSandbox = process.env.PAKASIR_SANDBOX === 'true';
+    const settings = await getStoreSettings();
+    const isSandbox = settings.pakasir_sandbox;
 
     return NextResponse.json({
       success: true,
@@ -62,6 +64,7 @@ export async function GET(
         accountDelivered: order.account_delivered,
         expiredAt: order.expired_at,
         isSandbox,
+        adminWhatsapp: settings.admin_whatsapp,
         createdAt: order.created_at,
         completedAt: order.completed_at,
       },

@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { client, ensureDbReady } from '@/lib/turso';
 import { assignStockToOrder } from '@/lib/stock';
 import { simulatePakasirPayment } from '@/lib/pakasir';
+import { getStoreSettings } from '@/lib/settings';
 
 export async function POST(req: NextRequest) {
   try {
-    if (process.env.PAKASIR_SANDBOX !== 'true') {
+    const settings = await getStoreSettings();
+    if (!settings.pakasir_sandbox) {
       return NextResponse.json(
-        { error: 'Mode simulasi dinonaktifkan karena sistem berada dalam mode produksi (PAKASIR_SANDBOX=false).' },
+        { error: 'Mode simulasi dinonaktifkan di pengaturan toko.' },
         { status: 403 }
       );
     }

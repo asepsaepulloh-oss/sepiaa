@@ -76,6 +76,9 @@ export default function HomePage() {
 
   // Toast State
   const [toastMessage, setToastMessage] = useState<{ title: string; desc: string } | null>(null);
+  const [storeSettings, setStoreSettings] = useState<{ admin_whatsapp: string; announcement_text?: string }>({
+    admin_whatsapp: '6282323240186',
+  });
 
   const showToast = (title: string, desc: string) => {
     setToastMessage({ title, desc });
@@ -91,6 +94,9 @@ export default function HomePage() {
         if (data.success) {
           setCategories(data.categories || []);
           setProducts(data.products || []);
+          if (data.settings) {
+            setStoreSettings(data.settings);
+          }
         } else {
           setError(data.error || 'Gagal memuat katalog produk');
         }
@@ -231,6 +237,14 @@ export default function HomePage() {
         cartCount={cart.reduce((sum, item) => sum + item.qty, 0)}
         onOpenCart={() => setIsCartOpen(true)}
       />
+
+      {/* Optional Announcement Banner */}
+      {storeSettings.announcement_text && (
+        <div className="bg-[#543827] text-[#fcfaf7] px-4 py-2 text-center text-xs font-semibold flex items-center justify-center gap-2 border-b border-[#67442d]">
+          <Sparkles className="w-3.5 h-3.5 text-[#cfa67c] shrink-0" />
+          <span>{storeSettings.announcement_text}</span>
+        </div>
+      )}
 
       <main className="flex-1">
         {/* HERO SECTION */}
@@ -566,12 +580,12 @@ export default function HomePage() {
             <ul className="space-y-2 text-xs">
               <li>
                 <a
-                  href="https://wa.me/6282323240186"
+                  href={`https://wa.me/${storeSettings.admin_whatsapp}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-white transition-colors"
                 >
-                  WhatsApp CS Resmi (0823-2324-0186)
+                  WhatsApp CS Resmi ({storeSettings.admin_whatsapp})
                 </a>
               </li>
               <li><span className="text-[#cfa67c]">Garansi Penggantian Penuh</span></li>

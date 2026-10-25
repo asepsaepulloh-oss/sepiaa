@@ -5,11 +5,12 @@
  * - Status Transaksi: https://pakasir.com/p/transaction-status
  * - Webhook: https://pakasir.com/p/webhook
  * - Simulasi Pembayaran: https://pakasir.com/p/payment-simulation
+ * - Penghitung Biaya: https://pakasir.com/p/fee-calculator
  */
 
+import { getStoreSettings, calculatePakasirFee } from './settings';
+
 const BASE_URL = (process.env.PAKASIR_BASE_URL || 'https://app.pakasir.com').trim().replace(/\/+$/, '');
-const PROJECT = (process.env.PAKASIR_PROJECT || '').trim().replace(/^\/+|\/+$/g, '');
-const API_KEY = (process.env.PAKASIR_API_KEY || '').trim();
 
 export interface PakasirPaymentResult {
   txn_id?: string;
@@ -38,44 +39,58 @@ export interface PakasirDetailResult {
 /**
  * Buat transaksi pembayaran baru di Pakasir API v2
  * POST /api/v2/create-transaction/{slug}/{order_id}
+ *
+ * Bila fee dibebankan ke pembeli (fee_mode = 'customer'):
+ * Nominal yang ditagihkan ke Pakasir dinaikkan sebesar biaya QRIS, sehingga
+ * hasil bersih yang diterima penjual adalah harga produk utuh.
  */
 export async function createPakasirTransaction(params: {
   method: string;
   orderId: string;
-  amount: number;
+  baseAmount: number; // Harga dasar produk
 }): Promise<PakasirPaymentResult> {
-  const { method, orderId, amount } = params;
+  const { method, orderId, baseAmount } = params;
 
-  // Jika API Key belum diisi atau masih placeholder dummy di lokal,
-  // buat fallback simulasi QRIS yang valid agar developer/user tetap bisa mencoba checkout langsung
-  if (!PROJECT || !API_KEY || API_KEY.includes('dummy') || API_KEY.includes('rahasia')) {
+  // Ambil pengaturan toko terkini (dari DB atau fallback .env)
+  const settings = await getStoreSettings();
+  const project = settings.pakasir_project.trim().replace(/^\/+|\/+$/g, '');
+  const apiKey = settings.pakasir_api_key.trim();
+
+  // Hitung biaya layanan Pakasir
+  const fee = calculatePakasirFee(baseAmount);
+
+  // Jika fee dibebankan ke pembeli, total yang ditagihkan adalah baseAmount + fee
+  const chargeAmount = settings.fee_mode === 'customer' ? (baseAmount + fee) : baseAmount;
+
+  // Jika API Key belum diisi atau masih mode offline demo lokal
+  if (!project || !apiKey || apiKey.includes('dummy') || apiKey.includes('rahasia')) {
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
     return {
       txn_id: `txn_demo_${Date.now()}`,
       order_id: orderId,
-      amount,
-      fee: 750,
-      total_payment: amount + 750,
+      amount: baseAmount,
+      fee: fee,
+      total_payment: chargeAmount,
       payment_method: method,
       payment_number: '082323240186',
-      qr_string: `00020101021226670014ID.LINKAJA.WWW01189360091430000000000215${orderId}52045812530336054${amount}5802ID5911SEPIA BEAR6007JAKARTA62070703A016304`,
+      qr_string: `00020101021226670014ID.LINKAJA.WWW01189360091430000000000215${orderId}52045812530336054${chargeAmount}5802ID5911SEPIA STORE6007JAKARTA62070703A016304`,
       expired_at: expiresAt,
-      is_sandbox: true,
+      is_sandbox: settings.pakasir_sandbox,
     };
   }
 
   // Pakasir v2 Endpoint
-  const url = `${BASE_URL}/api/v2/create-transaction/${encodeURIComponent(PROJECT)}/${encodeURIComponent(orderId)}`;
+  const url = `${BASE_URL}/api/v2/create-transaction/${encodeURIComponent(project)}/${encodeURIComponent(orderId)}`;
 
   const res = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Api-Key': API_KEY,
+      'X-Api-Key': apiKey,
     },
     body: JSON.stringify({
       method: method || 'qris',
-      amount: Math.round(amount),
+      amount: Math.round(chargeAmount),
     }),
   });
 
@@ -92,20 +107,21 @@ export async function createPakasirTransaction(params: {
     throw new Error(`Pakasir API v2 Error: ${msg}`);
   }
 
-  // Response v2 mengembalikan data transaksi langsung
+  const finalTotal = Number(json.total_payment || json.amount || chargeAmount);
+
   return {
     txn_id: json.txn_id,
-    project: json.project || PROJECT,
+    project: json.project || project,
     order_id: json.order_id || orderId,
-    amount: Number(json.amount || amount),
-    fee: Number(json.fee || 0),
-    total_payment: Number(json.total_payment || (amount + (json.fee || 0))),
+    amount: baseAmount, // Harga produk bersih penjual
+    fee: fee, // Biaya layanan QRIS
+    total_payment: finalTotal, // Total yang dibayar pembeli
     payment_method: json.payment_method || method,
     qr_string: json.qr_string,
     va_number: json.va_number,
     payment_number: json.va_number || json.payment_number,
     expired_at: json.expired_at,
-    is_sandbox: json.is_sandbox,
+    is_sandbox: json.is_sandbox ?? settings.pakasir_sandbox,
   };
 }
 
@@ -119,21 +135,24 @@ export async function getPakasirTransactionDetail(params: {
 }): Promise<PakasirDetailResult | null> {
   const { txnId, orderId } = params;
 
-  if (!PROJECT || !API_KEY || API_KEY.includes('dummy') || API_KEY.includes('rahasia')) {
-    return null; // Gunakan status lokal jika mode offline
+  const settings = await getStoreSettings();
+  const project = settings.pakasir_project.trim().replace(/^\/+|\/+$/g, '');
+  const apiKey = settings.pakasir_api_key.trim();
+
+  if (!project || !apiKey || apiKey.includes('dummy') || apiKey.includes('rahasia')) {
+    return null;
   }
 
-  // Di v2 status diakses melalui txn_id
   const targetId = txnId || orderId;
   if (!targetId) return null;
 
   try {
-    const url = `${BASE_URL}/api/v2/transaction-status/${encodeURIComponent(PROJECT)}/${encodeURIComponent(targetId)}`;
+    const url = `${BASE_URL}/api/v2/transaction-status/${encodeURIComponent(project)}/${encodeURIComponent(targetId)}`;
 
     const res = await fetch(url, {
       method: 'GET',
       headers: {
-        'X-Api-Key': API_KEY,
+        'X-Api-Key': apiKey,
       },
     });
 
@@ -165,8 +184,11 @@ export async function simulatePakasirPayment(params: {
 }): Promise<boolean> {
   const { txnId, orderId } = params;
 
-  if (!PROJECT || !API_KEY || API_KEY.includes('dummy') || API_KEY.includes('rahasia')) {
-    // Mode demo offline lokal
+  const settings = await getStoreSettings();
+  const project = settings.pakasir_project.trim().replace(/^\/+|\/+$/g, '');
+  const apiKey = settings.pakasir_api_key.trim();
+
+  if (!project || !apiKey || apiKey.includes('dummy') || apiKey.includes('rahasia')) {
     return true;
   }
 
@@ -174,12 +196,12 @@ export async function simulatePakasirPayment(params: {
   if (!targetId) return false;
 
   try {
-    const url = `${BASE_URL}/api/v2/payment-simulation/${encodeURIComponent(PROJECT)}/${encodeURIComponent(targetId)}`;
+    const url = `${BASE_URL}/api/v2/payment-simulation/${encodeURIComponent(project)}/${encodeURIComponent(targetId)}`;
 
     const res = await fetch(url, {
       method: 'POST',
       headers: {
-        'X-Api-Key': API_KEY,
+        'X-Api-Key': apiKey,
       },
     });
 
