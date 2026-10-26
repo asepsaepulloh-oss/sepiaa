@@ -49,9 +49,9 @@ export async function POST(req: NextRequest) {
     const {
       store_name,
       admin_whatsapp,
-      pakasir_project,
-      pakasir_api_key,
-      pakasir_sandbox,
+      qris_gateway_url,
+      qris_api_key,
+      qris_webhook_secret,
       fee_mode,
       announcement_text,
     } = body;
@@ -59,16 +59,16 @@ export async function POST(req: NextRequest) {
     await saveStoreSettings({
       store_name: store_name?.trim() || 'Sepia Store',
       admin_whatsapp: admin_whatsapp?.trim().replace(/[^0-9]/g, '') || '6282323240186',
-      pakasir_project: pakasir_project?.trim() || '',
-      pakasir_api_key: pakasir_api_key?.trim() || '',
-      pakasir_sandbox: Boolean(pakasir_sandbox),
+      qris_gateway_url: qris_gateway_url?.trim() || 'https://gomerch-beta.vercel.app',
+      qris_api_key: qris_api_key?.trim() || '',
+      qris_webhook_secret: qris_webhook_secret?.trim() || '',
       fee_mode: fee_mode === 'merchant' ? 'merchant' : 'customer',
       announcement_text: announcement_text?.trim() || '',
     });
 
     return NextResponse.json({
       success: true,
-      message: 'Pengaturan toko & gateway pembayaran berhasil disimpan!',
+      message: 'Pengaturan toko & gateway pembayaran QRIS berhasil disimpan!',
     });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });

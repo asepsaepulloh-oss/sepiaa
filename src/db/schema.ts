@@ -58,6 +58,7 @@ export const orders = sqliteTable('orders', {
   paymentNumber: text('payment_number'),
   txnId: text('txn_id'),
   qrString: text('qr_string'),
+  qrImageUrl: text('qr_image_url'),
   status: text('status').notNull().default('pending'), // 'pending' | 'completed' | 'expired' | 'canceled'
   accountDelivered: text('account_delivered'),
   expiredAt: integer('expired_at'),

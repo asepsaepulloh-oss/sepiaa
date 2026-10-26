@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { client, ensureDbReady } from '@/lib/turso';
-import { cancelPakasirTransaction } from '@/lib/pakasir';
 
 export async function POST(req: NextRequest) {
   try {
@@ -36,12 +35,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, message: 'Pesanan sudah berstatus dibatalkan.' });
     }
 
-    const txnId = order.txn_id ? String(order.txn_id) : null;
-
-    // Panggil cancel ke gateway Pakasir API v2
-    await cancelPakasirTransaction({ txnId, orderId }).catch(() => {});
-
-    // Update status di database
+    // Update status di database menjadi canceled
     await client.execute({
       sql: "UPDATE orders SET status = 'canceled' WHERE order_id = ?",
       args: [orderId],

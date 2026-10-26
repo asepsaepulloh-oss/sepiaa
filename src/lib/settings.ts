@@ -3,26 +3,22 @@ import { client, ensureDbReady } from './turso';
 export interface StoreSettingsData {
   store_name: string;
   admin_whatsapp: string;
-  pakasir_project: string;
-  pakasir_api_key: string;
-  pakasir_sandbox: boolean;
-  fee_mode: 'customer' | 'merchant'; // 'customer' = fee dibebankan ke pembeli
+  qris_gateway_url: string;
+  qris_api_key: string;
+  qris_webhook_secret: string;
+  fee_mode: 'customer' | 'merchant'; // 'customer' = fee QRIS dibebankan ke pembeli
   announcement_text?: string;
 }
 
 /**
- * Hitung biaya Pakasir QRIS resmi:
- * - Nominal <= Rp 105.000: 0.7% + Rp 310
- * - Nominal > Rp 105.000: 1%
- * Referensi: https://pakasir.com/p/pricing
+ * Hitung perkiraan biaya QRIS standar (0.7%):
+ * Jika fee dibebankan ke pembeli, dihitung sebagai fee tambahan transparan.
  */
-export function calculatePakasirFee(amount: number): number {
-  if (amount <= 105000) {
-    return Math.round(amount * 0.007 + 310);
-  } else {
-    return Math.round(amount * 0.01);
-  }
+export function calculateQrisFee(amount: number): number {
+  return Math.round(amount * 0.007);
 }
+
+export const calculatePakasirFee = calculateQrisFee;
 
 /**
  * Ambil semua pengaturan toko (mengutamakan database, fallback ke .env)
@@ -39,19 +35,22 @@ export async function getStoreSettings(): Promise<StoreSettingsData> {
 
     const store_name = dbMap.get('store_name') || 'Sepia Store';
     const admin_whatsapp = dbMap.get('admin_whatsapp') || '6282323240186';
-    const pakasir_project = dbMap.get('pakasir_project') || process.env.PAKASIR_PROJECT || '';
-    const pakasir_api_key = dbMap.get('pakasir_api_key') || process.env.PAKASIR_API_KEY || '';
-    const rawSandbox = dbMap.get('pakasir_sandbox');
-    const pakasir_sandbox = rawSandbox !== undefined ? rawSandbox === 'true' : process.env.PAKASIR_SANDBOX === 'true';
+    const qris_gateway_url =
+      dbMap.get('qris_gateway_url') ||
+      process.env.QRIS_GATEWAY_URL ||
+      'https://gomerch-beta.vercel.app';
+    const qris_api_key = dbMap.get('qris_api_key') || process.env.QRIS_API_KEY || '';
+    const qris_webhook_secret =
+      dbMap.get('qris_webhook_secret') || process.env.QRIS_WEBHOOK_SECRET || '';
     const fee_mode = (dbMap.get('fee_mode') as 'customer' | 'merchant') || 'customer';
     const announcement_text = dbMap.get('announcement_text') || '';
 
     return {
       store_name,
       admin_whatsapp,
-      pakasir_project,
-      pakasir_api_key,
-      pakasir_sandbox,
+      qris_gateway_url,
+      qris_api_key,
+      qris_webhook_secret,
       fee_mode,
       announcement_text,
     };
@@ -60,9 +59,9 @@ export async function getStoreSettings(): Promise<StoreSettingsData> {
     return {
       store_name: 'Sepia Store',
       admin_whatsapp: '6282323240186',
-      pakasir_project: process.env.PAKASIR_PROJECT || '',
-      pakasir_api_key: process.env.PAKASIR_API_KEY || '',
-      pakasir_sandbox: process.env.PAKASIR_SANDBOX === 'true',
+      qris_gateway_url: process.env.QRIS_GATEWAY_URL || 'https://gomerch-beta.vercel.app',
+      qris_api_key: process.env.QRIS_API_KEY || '',
+      qris_webhook_secret: process.env.QRIS_WEBHOOK_SECRET || '',
       fee_mode: 'customer',
       announcement_text: '',
     };

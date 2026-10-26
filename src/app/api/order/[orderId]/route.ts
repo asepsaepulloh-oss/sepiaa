@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { client, ensureDbReady } from '@/lib/turso';
-import { getPakasirTransactionDetail } from '@/lib/pakasir';
+import { getQrisPaymentStatus } from '@/lib/qris';
 import { assignStockToOrder } from '@/lib/stock';
 import { getStoreSettings } from '@/lib/settings';
 
@@ -23,14 +23,11 @@ export async function GET(
 
     let order: any = res.rows[0];
 
-    // Jika status masih pending, verifikasi ke Pakasir v2 langsung
-    if (order.status === 'pending') {
-      const detail = await getPakasirTransactionDetail({
-        txnId: order.txn_id ? String(order.txn_id) : null,
-        orderId: String(order.order_id),
-      });
+    // Jika status masih pending, verifikasi ke QRIS Gateway langsung
+    if (order.status === 'pending' && order.txn_id) {
+      const detail = await getQrisPaymentStatus(String(order.txn_id));
 
-      if (detail && detail.status === 'completed') {
+      if (detail && (detail.status === 'PAID' || detail.status === 'COMPLETED' || detail.status === 'SUCCESS')) {
         await assignStockToOrder(order.order_id);
 
         const updated = await client.execute({
@@ -44,7 +41,6 @@ export async function GET(
     }
 
     const settings = await getStoreSettings();
-    const isSandbox = settings.pakasir_sandbox;
 
     return NextResponse.json({
       success: true,
@@ -60,10 +56,10 @@ export async function GET(
         customerEmail: order.customer_email,
         paymentMethod: order.payment_method,
         qrString: order.qr_string,
+        qrImageUrl: order.qr_image_url,
         status: order.status,
         accountDelivered: order.account_delivered,
         expiredAt: order.expired_at,
-        isSandbox,
         adminWhatsapp: settings.admin_whatsapp,
         createdAt: order.created_at,
         completedAt: order.completed_at,

@@ -32,6 +32,7 @@ interface OrderData {
   customerEmail: string | null;
   paymentMethod: string;
   qrString: string | null;
+  qrImageUrl?: string | null;
   status: 'pending' | 'completed' | 'expired' | 'canceled';
   accountDelivered: string | null;
   expiredAt: number | null;
@@ -63,7 +64,9 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
         setOrder(data.order);
         setError(null);
 
-        if (data.order.qrString && !qrDataUrl) {
+        if (data.order.qrImageUrl) {
+          setQrDataUrl(data.order.qrImageUrl);
+        } else if (data.order.qrString && !qrDataUrl) {
           QRCode.toDataURL(data.order.qrString, {
             width: 320,
             margin: 2,
@@ -348,7 +351,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                 <div className="flex items-center justify-between pb-3 border-b border-[#ebdccb]">
                   <div className="text-left">
                     <p className="text-xs text-[#7e5434]">Metode Pembayaran</p>
-                    <p className="text-sm font-bold text-[#543827]">QRIS Nasional (Pakasir)</p>
+                    <p className="text-sm font-bold text-[#543827]">QRIS Dinamis (GoBiz / All E-Wallet)</p>
                   </div>
                   <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#ebdccb] text-[#543827]">
                     SCAN BEBAS BIAYA
@@ -358,7 +361,7 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                 {/* QR Code Canvas */}
                 <div className="flex flex-col items-center justify-center p-4 bg-white rounded-2xl max-w-xs mx-auto border-2 border-[#ebdccb] shadow-sm">
                   {qrDataUrl ? (
-                    <img src={qrDataUrl} alt="QRIS Pakasir" className="w-56 h-56 object-contain" />
+                    <img src={qrDataUrl} alt="QRIS Payment" className="w-56 h-56 object-contain" />
                   ) : (
                     <div className="w-56 h-56 flex items-center justify-center text-[#7e5434]">
                       <Loader2 className="w-8 h-8 animate-spin" />
@@ -384,9 +387,9 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
                 <div className="text-left p-4 rounded-2xl bg-[#f5efe6] border border-[#ebdccb] space-y-2 text-xs text-[#7e5434]">
                   <p className="font-bold text-[#543827]">Cara Pembayaran:</p>
                   <ol className="list-decimal list-inside space-y-1 text-[11px]">
-                    <li>Buka aplikasi m-Banking (BCA, BRI, Mandiri, BNI) atau E-Wallet (Dana, GoPay, OVO, ShopeePay).</li>
+                    <li>Buka aplikasi m-Banking (BCA, Mandiri, BRI, BNI) atau E-Wallet (GoPay, OVO, Dana, ShopeePay, LinkAja).</li>
                     <li>Pilih menu <strong>Scan QRIS</strong> dan arahkan kamera ke barcode di atas.</li>
-                    <li>Periksa nominal tagihan ({formatRupiah(order.totalPayment)}) lalu konfirmasi.</li>
+                    <li>Periksa nominal tagihan ({formatRupiah(order.totalPayment)}) lalu konfirmasi pembayaran.</li>
                     <li>Halaman ini akan otomatis diperbarui begitu pembayaran selesai.</li>
                   </ol>
                 </div>

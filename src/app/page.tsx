@@ -262,7 +262,7 @@ export default function HomePage() {
               </h1>
 
               <p className="text-[#7e5434] text-sm sm:text-base max-w-xl font-normal leading-relaxed">
-                Sepia Store mengoleksi produk digital kelas dunia, aplikasi hiburan, desain, dan kecerdasan buatan pilihan. Aktivasi instan via QRIS Pakasir, bergaransi penuh dan siap pakai.
+                Sepia Store mengoleksi produk digital kelas dunia, aplikasi hiburan, desain, dan kecerdasan buatan pilihan. Aktivasi instan via QRIS Dinamis, bergaransi penuh dan siap pakai.
               </p>
 
               {/* CTA Buttons */}
@@ -589,7 +589,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto pt-8 border-t border-[#67442d] flex flex-col sm:flex-row items-center justify-between text-xs text-[#cfa67c]">
           <p>&copy; {new Date().getFullYear()} Sepia Store. Hak Cipta Dilindungi.</p>
           <p className="text-[11px] text-[#dec4a6] mt-2 sm:mt-0">
-            Didukung oleh Pakasir QRIS Nasional &amp; Database Turso LibSQL.
+            Didukung oleh QRIS Payment Gateway Mandiri &amp; Database Turso LibSQL.
           </p>
         </div>
       </footer>

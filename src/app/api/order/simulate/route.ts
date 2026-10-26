@@ -1,39 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { client, ensureDbReady } from '@/lib/turso';
 import { assignStockToOrder } from '@/lib/stock';
-import { simulatePakasirPayment } from '@/lib/pakasir';
-import { getStoreSettings } from '@/lib/settings';
 
 export async function POST(req: NextRequest) {
   try {
-    const settings = await getStoreSettings();
-    if (!settings.pakasir_sandbox) {
-      return NextResponse.json(
-        { error: 'Mode simulasi dinonaktifkan di pengaturan toko.' },
-        { status: 403 }
-      );
-    }
-
     await ensureDbReady();
     const body = await req.json();
     const { orderId } = body;
 
     if (!orderId) {
       return NextResponse.json({ error: 'Order ID wajib diisi' }, { status: 400 });
-    }
-
-    // Ambil order dari DB
-    const orderRes = await client.execute({
-      sql: 'SELECT * FROM orders WHERE order_id = ? LIMIT 1',
-      args: [orderId],
-    });
-
-    if (orderRes.rows.length > 0) {
-      const order = orderRes.rows[0];
-      const txnId = order.txn_id ? String(order.txn_id) : null;
-
-      // Panggil simulasi Pakasir v2 jika ada koneksi
-      await simulatePakasirPayment({ txnId, orderId }).catch(() => {});
     }
 
     const res = await assignStockToOrder(orderId);

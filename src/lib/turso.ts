@@ -144,6 +144,11 @@ export async function ensureDbReady() {
     } catch {
       // Abaikan jika kolom sudah ada
     }
+    try {
+      await client.execute('ALTER TABLE orders ADD COLUMN qr_image_url TEXT;');
+    } catch {
+      // Abaikan jika kolom sudah ada
+    }
 
     // 2. Cek apakah kategori sudah ada
     const existingCat = await client.execute('SELECT COUNT(*) as count FROM categories');

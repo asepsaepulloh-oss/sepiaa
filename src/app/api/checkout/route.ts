@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { client, ensureDbReady } from '@/lib/turso';
-import { createPakasirTransaction } from '@/lib/pakasir';
+import { createQrisTransaction } from '@/lib/qris';
 import { getUserFromRequest } from '@/lib/auth-user';
 
 export async function POST(req: NextRequest) {
@@ -58,27 +58,27 @@ export async function POST(req: NextRequest) {
     const randSuffix = Math.random().toString(36).substring(2, 7).toUpperCase();
     const orderId = `SEP${dateStr}${randSuffix}`;
 
-    // Buat transaksi di Pakasir API v2
-    const payment = await createPakasirTransaction({
-      method: 'qris',
+    // Buat transaksi QRIS melalui Payment Gateway mandiri (GoBiz / Dynamic QRIS)
+    const payment = await createQrisTransaction({
       orderId,
       baseAmount: price,
+      description: `Pembayaran pesanan #${orderId}`,
     });
 
     const now = Date.now();
     const fee = payment.fee || 0;
     const totalPayment = payment.total_payment || (price + fee);
     const expiredAt = payment.expired_at ? new Date(payment.expired_at).getTime() : now + 15 * 60 * 1000;
-    const txnId = payment.txn_id || null;
+    const txnId = payment.payment_id || null;
 
-    // Simpan order di database beserta user_id (jika login)
+    // Simpan order di database beserta user_id (jika login), qr_string, dan qr_image_url
     await client.execute({
       sql: `INSERT INTO orders (
               id, order_id, user_id, product_id, variant_id, product_name, variant_name,
               amount, fee, total_payment, customer_name, customer_whatsapp,
-              customer_email, payment_method, payment_number, txn_id, qr_string,
+              customer_email, payment_method, payment_number, txn_id, qr_string, qr_image_url,
               status, expired_at, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`,
       args: [
         `ord-${Math.random().toString(36).substring(2, 9)}`,
         orderId,
@@ -94,9 +94,10 @@ export async function POST(req: NextRequest) {
         customerWhatsapp.trim(),
         customerEmail?.trim() || null,
         'qris',
-        payment.payment_number || txnId || null,
+        txnId,
         txnId,
         payment.qr_string || null,
+        payment.qr_image_url || null,
         expiredAt,
         now,
       ],

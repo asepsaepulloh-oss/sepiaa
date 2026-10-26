@@ -328,9 +328,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 <QrCode className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-xs font-bold text-[#543827]">QRIS Instan (Pakasir)</p>
+                <p className="text-xs font-bold text-[#543827]">QRIS Dinamis (GoBiz / All E-Wallet)</p>
                 <p className="text-[11px] text-[#7e5434]">
-                  BCA, BRI, Mandiri, BNI, Dana, GoPay, OVO, ShopeePay
+                  GoPay, OVO, Dana, ShopeePay, BCA, Mandiri, BRI, dll
                 </p>
               </div>
             </div>

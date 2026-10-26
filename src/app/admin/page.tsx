@@ -155,9 +155,9 @@ export default function AdminPage() {
   // Settings Form State
   const [settingsStoreName, setSettingsStoreName] = useState('Sepia Store');
   const [settingsAdminWhatsapp, setSettingsAdminWhatsapp] = useState('6282323240186');
-  const [settingsPakasirProject, setSettingsPakasirProject] = useState('');
-  const [settingsPakasirApiKey, setSettingsPakasirApiKey] = useState('');
-  const [settingsPakasirSandbox, setSettingsPakasirSandbox] = useState(false);
+  const [settingsQrisGatewayUrl, setSettingsQrisGatewayUrl] = useState('https://gomerch-beta.vercel.app');
+  const [settingsQrisApiKey, setSettingsQrisApiKey] = useState('');
+  const [settingsQrisWebhookSecret, setSettingsQrisWebhookSecret] = useState('');
   const [settingsFeeMode, setSettingsFeeMode] = useState<'customer' | 'merchant'>('customer');
   const [settingsAnnouncement, setSettingsAnnouncement] = useState('');
   const [isSavingSettings, setIsSavingSettings] = useState(false);
@@ -195,9 +195,9 @@ export default function AdminPage() {
         if (data.settings) {
           setSettingsStoreName(data.settings.store_name || 'Sepia Store');
           setSettingsAdminWhatsapp(data.settings.admin_whatsapp || '6282323240186');
-          setSettingsPakasirProject(data.settings.pakasir_project || '');
-          setSettingsPakasirApiKey(data.settings.pakasir_api_key || '');
-          setSettingsPakasirSandbox(Boolean(data.settings.pakasir_sandbox));
+          setSettingsQrisGatewayUrl(data.settings.qris_gateway_url || 'https://gomerch-beta.vercel.app');
+          setSettingsQrisApiKey(data.settings.qris_api_key || '');
+          setSettingsQrisWebhookSecret(data.settings.qris_webhook_secret || '');
           setSettingsFeeMode(data.settings.fee_mode || 'customer');
           setSettingsAnnouncement(data.settings.announcement_text || '');
         }
@@ -265,9 +265,9 @@ export default function AdminPage() {
         body: JSON.stringify({
           store_name: settingsStoreName,
           admin_whatsapp: settingsAdminWhatsapp,
-          pakasir_project: settingsPakasirProject,
-          pakasir_api_key: settingsPakasirApiKey,
-          pakasir_sandbox: settingsPakasirSandbox,
+          qris_gateway_url: settingsQrisGatewayUrl,
+          qris_api_key: settingsQrisApiKey,
+          qris_webhook_secret: settingsQrisWebhookSecret,
           fee_mode: settingsFeeMode,
           announcement_text: settingsAnnouncement,
         }),
@@ -886,9 +886,9 @@ export default function AdminPage() {
                   <div className="pt-4 border-t border-[#ebdccb] text-xs text-[#7e5434]">
                     <span className="flex items-center gap-1.5 font-bold text-[#543827] mb-1">
                       <ShieldCheck className="w-4 h-4 text-emerald-700" />
-                      <span>Pakasir v2 Terhubung</span>
+                      <span>QRIS Gateway Terhubung</span>
                     </span>
-                    <p className="text-[11px]">QRIS otomatis memproses pembayaran dan menyerahkan stok akun.</p>
+                    <p className="text-[11px]">Dynamic QRIS otomatis memproses pembayaran dan menyerahkan stok akun.</p>
                   </div>
                 </div>
               </div>
@@ -1247,14 +1247,14 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                {/* 2. Biaya Transaksi Pakasir (Fee Charge Mode) */}
+                {/* 2. Biaya Transaksi QRIS (Fee Charge Mode) */}
                 <div className="bg-[#fcfaf7] rounded-3xl border border-[#ebdccb] card-shadow p-6 sm:p-8 space-y-5">
                   <div>
                     <h3 className="text-xs font-bold text-[#543827] uppercase tracking-wider">
-                      2. Pembebanan Biaya Layanan QRIS (Pakasir Fee)
+                      2. Pembebanan Biaya Layanan QRIS (Payment Fee)
                     </h3>
                     <p className="text-xs text-[#7e5434] mt-0.5">
-                      Pilih pihak yang menanggung biaya transaksi QRIS (0.7% + Rp 310).
+                      Pilih pihak yang menanggung biaya transaksi QRIS.
                     </p>
                   </div>
 
@@ -1273,11 +1273,11 @@ export default function AdminPage() {
                           Dibebankan ke Pembeli / User
                         </span>
                         <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-full">
-                          Rekomendasi
+                          Aktif (Penjual Terima Bersih)
                         </span>
                       </div>
                       <p className="text-[11px] text-[#7e5434] leading-relaxed">
-                        Biaya QRIS ditambahkan ke total invoice pembeli. Penjual menerima <strong>100% uang bersih</strong> tanpa potongan fee.
+                        Biaya layanan ditambahkan ke total invoice pembeli. Penjual menerima <strong>100% uang bersih</strong> tanpa potongan fee.
                       </p>
                     </div>
 
@@ -1302,65 +1302,84 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                {/* 3. Konfigurasi Gateway Pakasir API v2 */}
+                {/* 3. Konfigurasi QRIS Payment Gateway Mandiri (GoBiz / Dynamic QRIS) */}
                 <div className="bg-[#fcfaf7] rounded-3xl border border-[#ebdccb] card-shadow p-6 sm:p-8 space-y-5">
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-xs font-bold text-[#543827] uppercase tracking-wider">
-                        3. Konfigurasi Gateway Pakasir (Resmi API v2)
+                        3. Konfigurasi QRIS Gateway Mandiri (GoBiz / Dynamic QRIS)
                       </h3>
                       <p className="text-xs text-[#7e5434] mt-0.5">
-                        Ambil slug proyek dan API Key dari dashboard <a href="https://app.pakasir.com" target="_blank" rel="noopener noreferrer" className="underline font-bold text-[#543827]">app.pakasir.com</a>.
+                        Masukkan Endpoint Gateway URL, API Key, dan Webhook Secret Anda.
                       </p>
                     </div>
                     <span className="text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-full">
-                      API v2
+                      QRIS v1 API
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-4">
                     <div className="space-y-1.5">
-                      <label className="block text-xs font-bold text-[#543827]">Slug Proyek Pakasir</label>
+                      <label className="block text-xs font-bold text-[#543827]">QRIS Gateway URL</label>
                       <input
-                        type="text"
-                        value={settingsPakasirProject}
-                        onChange={(e) => setSettingsPakasirProject(e.target.value)}
-                        placeholder="Contoh: sepiastore"
+                        type="url"
+                        value={settingsQrisGatewayUrl}
+                        onChange={(e) => setSettingsQrisGatewayUrl(e.target.value)}
+                        placeholder="https://gomerch-beta.vercel.app"
                         className="w-full bg-[#f5efe6] border border-[#ebdccb] rounded-xl px-4 py-2.5 text-xs text-[#543827] font-semibold focus:outline-none focus:border-[#543827]"
                       />
                     </div>
 
-                    <div className="space-y-1.5">
-                      <label className="block text-xs font-bold text-[#543827]">API Key Pakasir</label>
-                      <input
-                        type="password"
-                        value={settingsPakasirApiKey}
-                        onChange={(e) => setSettingsPakasirApiKey(e.target.value)}
-                        placeholder="api-key-rahasia-proyek"
-                        className="w-full bg-[#f5efe6] border border-[#ebdccb] rounded-xl px-4 py-2.5 text-xs text-[#543827] font-semibold focus:outline-none focus:border-[#543827]"
-                      />
-                    </div>
-                  </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-bold text-[#543827]">QRIS API Key</label>
+                        <input
+                          type="password"
+                          value={settingsQrisApiKey}
+                          onChange={(e) => setSettingsQrisApiKey(e.target.value)}
+                          placeholder="qris_live_..."
+                          className="w-full bg-[#f5efe6] border border-[#ebdccb] rounded-xl px-4 py-2.5 text-xs text-[#543827] font-semibold focus:outline-none focus:border-[#543827]"
+                        />
+                      </div>
 
-                  {/* Mode Sandbox Toggle */}
-                  <div className="p-4 rounded-2xl bg-[#f5efe6] border border-[#ebdccb] flex items-center justify-between gap-4">
-                    <div>
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-bold text-[#543827]">Webhook Signing Secret</label>
+                        <input
+                          type="password"
+                          value={settingsQrisWebhookSecret}
+                          onChange={(e) => setSettingsQrisWebhookSecret(e.target.value)}
+                          placeholder="whsec_..."
+                          className="w-full bg-[#f5efe6] border border-[#ebdccb] rounded-xl px-4 py-2.5 text-xs text-[#543827] font-semibold focus:outline-none focus:border-[#543827]"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Webhook Endpoint Guide Info */}
+                    <div className="p-4 rounded-2xl bg-[#f5efe6] border border-[#ebdccb] space-y-1.5">
                       <span className="text-xs font-bold text-[#543827] block">
-                        Mode Sandbox Pakasir (Uji Coba)
+                        URL Webhook Toko Anda:
                       </span>
-                      <p className="text-[11px] text-[#7e5434]">
-                        Centang ini HANYA jika proyek Pakasir Anda masih mode Sandbox. Jika dinonaktifkan (mode produksi), tombol simulasi pembayaran otomatis disembunyikan.
+                      <div className="flex items-center gap-2">
+                        <code className="text-[11px] font-mono bg-white border border-[#ebdccb] px-3 py-1.5 rounded-xl text-[#543827] flex-1 truncate select-all">
+                          {typeof window !== 'undefined' ? `${window.location.origin}/api/webhooks/qris` : '/api/webhooks/qris'}
+                        </code>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (typeof window !== 'undefined') {
+                              navigator.clipboard.writeText(`${window.location.origin}/api/webhooks/qris`);
+                              showToast('Tersalin!', 'URL Webhook berhasil disalin ke clipboard.');
+                            }
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-[#543827] text-white text-xs font-bold hover:bg-[#67442d] transition-colors cursor-pointer"
+                        >
+                          Salin URL
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-[#9e6d42]">
+                        Daftarkan URL ini di panel gateway QRIS Anda untuk menerima konfirmasi pembayaran otomatis (HMAC-SHA256 signature).
                       </p>
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer shrink-0">
-                      <input
-                        type="checkbox"
-                        checked={settingsPakasirSandbox}
-                        onChange={(e) => setSettingsPakasirSandbox(e.target.checked)}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-[#dec4a6] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[#dec4a6] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#543827]"></div>
-                    </label>
                   </div>
                 </div>
 
